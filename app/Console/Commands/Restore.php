@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Console\Commands\Traits\GitTrait;
+use Illuminate\Support\Facades\File;
+
 
 class Restore extends Command
 {
@@ -94,6 +96,10 @@ class Restore extends Command
             unlink($tempSqlPath);
         }
 
+        // 6. Delete the temporary directory
+        if (File::isDirectory($temporaryBackupDir)) {
+            File::deleteDirectory($temporaryBackupDir);
+        }
 
         $this->info('Restored successfully');
     }
