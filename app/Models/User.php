@@ -56,4 +56,9 @@ class User extends Authenticatable
         return $this->hasMany(DietPlan::class);
     }
 
+    public function restrictions()
+    {
+        return $this->hasMany(UserRestriction::class);
+    }
+
 }
