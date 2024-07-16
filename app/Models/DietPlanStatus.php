@@ -15,5 +15,8 @@ class DietPlanStatus extends Model
         'name',
     ];
 
-    // Define any necessary relationships here
+    public function dietPlans()
+    {
+        return $this->hasMany(DietPlan::class);
+    }
 }

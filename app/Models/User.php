@@ -51,4 +51,9 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class);
     }
 
+    public function dietPlans()
+    {
+        return $this->hasMany(DietPlan::class);
+    }
+
 }
