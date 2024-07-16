@@ -27,4 +27,10 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getCustomLabelAttribute()
+    {
+        return "{$this->user->name} - {$this->amount} - {$this->method} - {$this->created_at}";
+    }
+
 }

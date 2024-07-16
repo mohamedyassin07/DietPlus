@@ -3,17 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PaymentResource\Pages;
-use App\Filament\Resources\PaymentResource\RelationManagers;
 use App\Models\Payment;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\DatePicker;
 
 class PaymentResource extends Resource
 {
@@ -24,16 +25,14 @@ class PaymentResource extends Resource
 
     public static function form(Form $form): Form
     {
-
         return $form
             ->schema([
                 Select::make('user_id')
                     ->relationship('user', 'name', fn ($query) => $query->where('user_type', 'customer'))
                     ->required(),
-                Forms\Components\TextInput::make('amount')
+                TextInput::make('amount')
                     ->required()
                     ->numeric(),
-
                 Select::make('method')
                     ->options([
                         'stripe' => 'Stripe',
@@ -50,7 +49,11 @@ class PaymentResource extends Resource
                         'refunded' => 'Refunded',
                     ])
                     ->required(),
-                    
+                Hidden::make('currency')
+                    ->default('DEFAULT'),
+                DatePicker::make('date')
+                    ->required()
+                    ->label('Date'), // خانة التاريخ
             ]);
     }
 
@@ -59,11 +62,11 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->sortable(),
-                TextColumn::make('user.name')->sortable()->searchable(),
+                TextColumn::make('user.name')->label('User Name')->sortable()->searchable(),
                 TextColumn::make('amount')->sortable(),
                 TextColumn::make('method')->sortable(),
                 TextColumn::make('status')->sortable(),
-                TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('date')->label('Date')->dateTime()->sortable(),
             ])
             ->filters([
                 SelectFilter::make('method')
