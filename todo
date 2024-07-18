@@ -1,0 +1,13 @@
+- Email Verification
+    - settings panel
+        - verification title
+        - verification body
+            - verification link shortcode
+    - page to verificate
+    - api endpoint
+
+- Api data Scope
+- create new user
+    - user type
+    - image
+    - verification date
