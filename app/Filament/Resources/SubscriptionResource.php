@@ -42,7 +42,7 @@ class SubscriptionResource extends Resource
                     ->nullable(),
                 Select::make('diet_plan_id')
                     ->relationship('dietPlan', 'label', fn ($query) => $query)
-                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->user->name} - {$record->deadline}")
+                    ->getOptionLabelFromRecordUsing(fn ($record) => ($record->user ? "{$record->user->name}" : 'DELETED USER') . " - {$record->deadline}")
                     ->nullable(),
                 Select::make('status_id')
                     ->relationship('status', 'name')
