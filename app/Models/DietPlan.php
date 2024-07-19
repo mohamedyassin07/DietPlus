@@ -10,7 +10,6 @@ class DietPlan extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // The attributes that are mass assignable.
     protected $fillable = [
         'user_id',
         'meals_schedule',
@@ -18,7 +17,11 @@ class DietPlan extends Model
         'deadline',
     ];
 
-    // Define relationships
+    protected $casts = [
+        'meals_schedule' => 'array',
+        'deadline' => 'date',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -27,15 +30,5 @@ class DietPlan extends Model
     public function status()
     {
         return $this->belongsTo(DietPlanStatus::class);
-    }
-
-    public function setMealsScheduleAttribute($value)
-    {
-        $this->attributes['meals_schedule'] = json_encode($value);
-    }
-
-    public function getMealsScheduleAttribute($value)
-    {
-        return json_decode($value, true);
     }
 }

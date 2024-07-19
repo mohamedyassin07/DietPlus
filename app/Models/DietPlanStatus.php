@@ -10,13 +10,5 @@ class DietPlanStatus extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // The attributes that are mass assignable.
-    protected $fillable = [
-        'name',
-    ];
-
-    public function dietPlans()
-    {
-        return $this->hasMany(DietPlan::class);
-    }
+    protected $fillable = ['name'];
 }

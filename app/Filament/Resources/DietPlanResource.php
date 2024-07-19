@@ -4,19 +4,19 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\DietPlanResource\Pages;
 use App\Models\DietPlan;
+use App\Models\Food;
+use App\Models\User;
+use Filament\Forms;
+use Filament\Tables;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Grid;
 use Filament\Tables\Filters\TrashedFilter;
-use Filament\Tables;
-use App\Models\User;
-use App\Models\Food;
 
 class DietPlanResource extends Resource
 {
@@ -31,17 +31,17 @@ class DietPlanResource extends Resource
             ->schema([
                 Grid::make(3)->schema([
                     Select::make('user_id')
-                        ->label('Customer')
-                        //->relationship('user', 'name')
-                        ->options(User::where('user_type', 'customer')->pluck('name', 'id'))
+                        ->label('User')
+                        ->relationship('user', 'name')
+                        ->options(User::where('user_type', 'Customer')->pluck('name', 'id'))
                         ->required()
                         ->columnSpan(1),
                     Select::make('status_id')
-                        //->relationship('status', 'name')
-                        ->options(User::where('user_type', 'customer')->pluck('name', 'id'))
+                        ->relationship('status', 'name')
                         ->required()
                         ->columnSpan(1),
                     DatePicker::make('deadline')
+                        ->required()
                         ->columnSpan(1),
                 ]),
                 Repeater::make('meals_schedule')
@@ -57,8 +57,7 @@ class DietPlanResource extends Resource
                                 Grid::make(2)->schema([
                                     Select::make('food_id')
                                         ->label('Food')
-                                        ->relationship('food', 'name')
-                                        ->options(Food::pluck('name', 'id'))
+                                        ->options(Food::pluck('name', 'id')->toArray())
                                         ->required()
                                         ->columnSpan(1),
                                     TextInput::make('quantity')
@@ -74,8 +73,7 @@ class DietPlanResource extends Resource
                                 Grid::make(2)->schema([
                                     Select::make('food_id')
                                         ->label('Food')
-                                        ->relationship('food', 'name')
-                                        ->options(Food::pluck('name', 'id'))
+                                        ->options(Food::pluck('name', 'id')->toArray())
                                         ->required()
                                         ->columnSpan(1),
                                     TextInput::make('quantity')
@@ -91,8 +89,7 @@ class DietPlanResource extends Resource
                                 Grid::make(2)->schema([
                                     Select::make('food_id')
                                         ->label('Food')
-                                        ->relationship('food', 'name')
-                                        ->options(Food::pluck('name', 'id'))
+                                        ->options(Food::pluck('name', 'id')->toArray())
                                         ->required()
                                         ->columnSpan(1),
                                     TextInput::make('quantity')
@@ -108,8 +105,7 @@ class DietPlanResource extends Resource
                                 Grid::make(2)->schema([
                                     Select::make('food_id')
                                         ->label('Food')
-                                        ->relationship('food', 'name')
-                                        ->options(Food::pluck('name', 'id'))
+                                        ->options(Food::pluck('name', 'id')->toArray())
                                         ->required()
                                         ->columnSpan(1),
                                     TextInput::make('quantity')
@@ -125,8 +121,7 @@ class DietPlanResource extends Resource
                                 Grid::make(2)->schema([
                                     Select::make('food_id')
                                         ->label('Food')
-                                        ->relationship('food', 'name')
-                                        ->options(Food::pluck('name', 'id'))
+                                        ->options(Food::pluck('name', 'id')->toArray())
                                         ->required()
                                         ->columnSpan(1),
                                     TextInput::make('quantity')
@@ -143,29 +138,39 @@ class DietPlanResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public static function table(Tables\Table $table): Tables\Table
     {
         return $table
             ->columns([
-                TextColumn::make('id')->sortable(),
-                TextColumn::make('user.name')->sortable()->searchable()->label('User Name'),
-                TextColumn::make('status.name')->sortable()->searchable()->label('Status'),
-                TextColumn::make('deadline')->date()->sortable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('User'),
+                Tables\Columns\TextColumn::make('status.name')
+                    ->label('Status'),
+                Tables\Columns\TextColumn::make('deadline')
+                    ->date(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime(),
             ])
             ->filters([
                 TrashedFilter::make(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 Tables\Actions\ForceDeleteBulkAction::make(),
                 Tables\Actions\RestoreBulkAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // Define relations here
+        ];
     }
 
     public static function getPages(): array
