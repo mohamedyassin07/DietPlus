@@ -23,6 +23,9 @@ use Filament\Support\Exceptions\Halt;
 use Filament\Forms\Components\Actions\Action;
 use Livewire\Component;
 use Illuminate\Http\Request;
+use Filament\Forms\Components\Builder;
+use Filament\Forms\Components\Builder\Block;
+use Filament\Forms\Components\Tabs;
 
 
 class DietPlanResource extends Resource
@@ -39,8 +42,8 @@ class DietPlanResource extends Resource
                 Wizard::make([
                     // Step 1: Basic Information
                     Wizard\Step::make('Basic Information')
-                                            ->schema([
-                            Grid::make(3)->schema([
+                        ->columns(3)
+                        ->schema([
                                 Select::make('user_id')
                                     ->label('User')
                                     ->relationship('user', 'name')
@@ -54,130 +57,70 @@ class DietPlanResource extends Resource
                                 DatePicker::make('deadline')
                                     ->required()
                                     ->columnSpan(1),
-                            ]),
+                            
                         ]),
 
                     // Step 2: Meals Schedule
                     Wizard\Step::make('Meals Schedule')
-                
-                
-                    ->afterValidation(function ( $data1 , $data2 ) {
-                        
-                        dd( 'after val step 2' );
-
-                        if (true) {
-                            throw new Halt();
-                        }
-                
-                    })
-
                         ->schema([
-                            Repeater::make('meals_schedule')
-                                ->cloneable()
-                                ->reorderableWithButtons()
-                                ->schema([
-                                    DatePicker::make('day_date')
-                                        ->label('Day Date')
-                                        ->required(),
-                                    Repeater::make('breakfast')
-                                        ->label('Breakfast')
+                            Builder::make('meals_schedule')
+                                ->label(false)
+                                ->addActionLabel('Choose Diet Plan')
+                                ->maxItems(1)
+                                ->blockNumbers(false)
+                                ->blocks([
+                                    Block::make('Keto')
+                                        ->maxItems(1)
                                         ->schema([
-                                            Grid::make(2)->schema([
-                                                Select::make('food_id')
-                                                    ->label('Food')
-                                                    ->options(Food::pluck('name', 'id')->toArray())
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                                TextInput::make('quantity')
-                                                    ->label('Quantity')
-                                                    ->numeric()
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                            ]),
+                                            Repeater::make('keto_day')
+                                                ->addActionLabel('Add Another Day ')
+                                                ->label(false)
+                                                ->collapsible()
+                                                ->cloneable()
+                                                ->reorderableWithButtons()
+                                                ->minItems(1)
+                                                ->required()
+                                                ->columnSpan('full')
+                                                ->schema([
+                                                    DatePicker::make('day_date')
+                                                        ->label('Day Date')
+                                                        ->live(onBlur: true)
+                                                        ->required(),
+                                                    Tabs::make('Meals')
+                                                        ->tabs([
+                                                            self::keto_meal_fields('breakfast', 'Breakfast'),
+                                                            self::keto_meal_fields('snack_1', 'Snack 1'),
+                                                            self::keto_meal_fields('lunch', 'Lunch'),
+                                                            self::keto_meal_fields('snack_2', 'Snack 2'),
+                                                            self::keto_meal_fields('dinner', 'Dinner'),
+                                                        ])
+                                                        ->columnSpan(2)
+
+
+
+
+                                                ])
+                                                ->itemLabel(fn(array $state): ?string => $state['day_date'] ?? 'New Day')
+                                                ,
                                         ]),
-                                    Repeater::make('snack_1')
-                                        ->label('Snack 1')
-                                        ->schema([
-                                            Grid::make(2)->schema([
-                                                Select::make('food_id')
-                                                    ->label('Food')
-                                                    ->options(Food::pluck('name', 'id')->toArray())
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                                TextInput::make('quantity')
-                                                    ->label('Quantity')
-                                                    ->numeric()
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                            ]),
-                                        ]),
-                                    Repeater::make('lunch')
-                                        ->label('Lunch')
-                                        ->schema([
-                                            Grid::make(2)->schema([
-                                                Select::make('food_id')
-                                                    ->label('Food')
-                                                    ->options(Food::pluck('name', 'id')->toArray())
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                                TextInput::make('quantity')
-                                                    ->label('Quantity')
-                                                    ->numeric()
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                            ]),
-                                        ]),
-                                    Repeater::make('snack_2')
-                                        ->label('Snack 2')
-                                        ->schema([
-                                            Grid::make(2)->schema([
-                                                Select::make('food_id')
-                                                    ->label('Food')
-                                                    ->options(Food::pluck('name', 'id')->toArray())
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                                TextInput::make('quantity')
-                                                    ->label('Quantity')
-                                                    ->numeric()
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                            ]),
-                                        ]),
-                                    Repeater::make('dinner')
-                                        ->label('Dinner')
-                                        ->schema([
-                                            Grid::make(2)->schema([
-                                                Select::make('food_id')
-                                                    ->label('Food')
-                                                    ->options(Food::pluck('name', 'id')->toArray())
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                                TextInput::make('quantity')
-                                                    ->label('Quantity')
-                                                    ->numeric()
-                                                    ->required()
-                                                    ->columnSpan(1),
-                                            ]),
-                                        ]),
-                                ])
-                                ->minItems(1)
-                                ->required()
-                                ->columnSpan('full'),
+                                ]),
                         ]),
+
+
                 ])->skippable()
-                ->columnSpan(2)
-                ->persistStepInQueryString()
-                ->nextAction(
-                    function (Component $livewire , $record  , Action $action ){
-                        $action->label('GENERATE PLAN')->color('info');
-                        //$data = $livewire->form->getState();
-                        //dd( $data, $record->deadline, $record->id );
+                    ->columnSpan(2)
+                    ->persistStepInQueryString()
+                    // ->nextAction(
+                    //     function (Component $livewire, $record, Action $action) {
+                    //         $action->label('GENERATE PLAN')->color('info');
+                    //         $data = $livewire->form->getState();
+                    //         //dd( $data, $record->deadline, $record->id );
 
 
 
-                    }
-                )
-,
+                    //     }
+                    // )
+                    ,
             ]);
     }
 
@@ -223,5 +166,29 @@ class DietPlanResource extends Resource
             'create' => Pages\CreateDietPlan::route('/create'),
             'edit' => Pages\EditDietPlan::route('/{record}/edit'),
         ];
+    }
+
+    public static function keto_meal_fields($slug, $name)
+    {
+        return Tabs\Tab::make($name)
+            ->schema([
+                Repeater::make($slug)
+                    ->label(false)
+                    ->addActionLabel('Add to ' .  $name)
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('food_id')
+                                ->label('Food')
+                                ->options(Food::pluck('name', 'id')->toArray())
+                                //->required()
+                                ->columnSpan(1),
+                            TextInput::make('quantity')
+                                ->label('Quantity')
+                                ->numeric()
+                                //->required()
+                                ->columnSpan(1),
+                        ]),
+                    ]),
+            ]);
     }
 }
