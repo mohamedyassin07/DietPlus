@@ -17,6 +17,9 @@ class FoodResource extends Resource
     protected static ?string $model = Food::class;
     protected static ?string $navigationIcon = 'heroicon-o-cake';
     protected static ?int $navigationSort = 8;
+    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $navigationGroup = 'Plans';
+
 
     public static function form(Form $form): Form
     {

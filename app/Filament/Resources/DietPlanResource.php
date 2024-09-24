@@ -33,7 +33,9 @@ class DietPlanResource extends Resource
     protected static ?string $model = DietPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 50;
+    protected static ?string $navigationGroup = 'Plans';
+
 
     public static function form(Form $form): Form
     {

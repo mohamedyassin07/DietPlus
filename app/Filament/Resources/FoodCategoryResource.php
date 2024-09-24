@@ -17,9 +17,10 @@ class FoodCategoryResource extends Resource
 {
     protected static ?string $model = FoodCategory::class;
 
-    // استخدام أيقونة موجودة في مجموعة Heroicons
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 20;
+    protected static ?string $navigationGroup = 'Plans';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {
@@ -41,7 +42,7 @@ class FoodCategoryResource extends Resource
                 TextColumn::make('updated_at')->dateTime('M d, Y'),
             ])
             ->filters([
-                // إضافة أي مرشحات هنا إذا لزم الأمر
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -55,7 +56,7 @@ class FoodCategoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // إضافة أي علاقات هنا إذا لزم الأمر
+
         ];
     }
 

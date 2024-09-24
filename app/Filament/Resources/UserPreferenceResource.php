@@ -23,6 +23,8 @@ class UserPreferenceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
     protected static ?int $navigationSort = 12;
+    protected static ?string $navigationGroup = 'Users';
+
 
     public static function form(Form $form): Form
     {

@@ -27,9 +27,9 @@ class UserQuizResource extends Resource
     protected static ?string $model = UserQuiz::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 10;
+    protected static ?string $navigationGroup = 'Users';
 
-    // Set the order of the resource in the navigation
-    protected static ?int $navigationSort = 2;
 
     public static function form(Forms\Form $form): Forms\Form
     {

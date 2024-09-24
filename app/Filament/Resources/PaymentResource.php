@@ -19,6 +19,10 @@ use Filament\Forms\Components\DatePicker;
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
+    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $navigationGroup = 'Subscriptions';
+
+
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?int $navigationSort = 5;

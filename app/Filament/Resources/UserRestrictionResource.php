@@ -18,6 +18,8 @@ class UserRestrictionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
     protected static ?int $navigationSort = 11;
+    protected static ?string $navigationGroup = 'Users';
+
 
     public static function form(Form $form): Form
     {
@@ -41,7 +43,6 @@ class UserRestrictionResource extends Resource
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('user.name')->label('User Name')->sortable()->searchable(),
                 TextColumn::make('restriction.name')->label('Restriction Name')->sortable()->searchable(),
-                // حذف أعمدة created_at و updated_at من الجدول
             ])
             ->filters([
                 SelectFilter::make('user_id')->relationship('user', 'name'),

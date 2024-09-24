@@ -27,7 +27,9 @@ class RecipeResource extends Resource
     protected static ?string $model = Recipe::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cake';
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 40;
+    protected static ?string $navigationGroup = 'Plans';
+
 
     public static function form(Form $form): Form
     {

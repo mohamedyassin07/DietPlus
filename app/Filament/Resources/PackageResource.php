@@ -19,7 +19,9 @@ class PackageResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-folder';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 100;
+    protected static ?string $navigationGroup = 'Subscriptions';
+
 
     public static function form(Form $form): Form
     {
