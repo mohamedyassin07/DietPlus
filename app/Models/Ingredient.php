@@ -24,4 +24,5 @@ class Ingredient extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+    
 }

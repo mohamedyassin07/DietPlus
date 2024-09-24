@@ -15,7 +15,7 @@ use Filament\Tables\Filters\SelectFilter;
 class FoodResource extends Resource
 {
     protected static ?string $model = Food::class;
-    protected static ?string $navigationIcon = 'heroicon-o-cake'; // تغيير الأيقونة إلى heroicon-o-database
+    protected static ?string $navigationIcon = 'heroicon-o-cake';
     protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
