@@ -61,4 +61,19 @@ class User extends Authenticatable
         return $this->hasMany(UserRestriction::class);
     }
 
+    public function userRestrictions()
+    {
+        return $this->hasMany(UserRestriction::class);
+    }
+    
+    public function userPreferences()
+    {
+        return $this->hasMany(UserPreference::class);
+    }
+
+    public function userQuizzes()
+    {
+        return $this->hasMany(UserQuiz::class);
+    }
+
 }

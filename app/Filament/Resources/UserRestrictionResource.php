@@ -18,7 +18,7 @@ class UserRestrictionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
     protected static ?int $navigationSort = 11;
-    protected static ?string $navigationGroup = 'Users';
+    protected static ?string $navigationParentItem = 'Users';
 
 
     public static function form(Form $form): Form
