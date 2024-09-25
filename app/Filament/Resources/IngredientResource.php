@@ -23,11 +23,9 @@ use Filament\Tables\Columns\TextInputColumn;
 class IngredientResource extends Resource
 {
     protected static ?string $model = Ingredient::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?int $navigationSort = 30;
-
-
+    protected static ?int $navigationSort = 240;
+    protected static ?string $navigationParentItem = 'Recipes';
 
     public static function form(Form $form): Form
     {

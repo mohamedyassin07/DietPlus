@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class UserPreferenceResource extends Resource
 {
     protected static ?string $model = UserPreference::class;
-
+    protected static ?int $navigationSort = 110;
     protected static ?string $navigationIcon = 'heroicon-o-heart';
     protected static ?string $navigationParentItem = 'Users';
 

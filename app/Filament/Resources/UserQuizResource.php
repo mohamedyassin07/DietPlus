@@ -25,9 +25,8 @@ use Filament\Tables\Actions\DeleteAction;
 class UserQuizResource extends Resource
 {
     protected static ?string $model = UserQuiz::class;
-
     protected static ?string $navigationParentItem = 'Users';
-
+    protected static ?int $navigationSort = 130;
 
     public static function form(Forms\Form $form): Forms\Form
     {

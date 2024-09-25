@@ -16,12 +16,9 @@ use Filament\Tables\Actions\DeleteBulkAction;
 class PackageResource extends Resource
 {
     protected static ?string $model = Package::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-folder';
-
-    protected static ?int $navigationSort = 100;
-    protected static ?string $navigationGroup = 'Subscriptions';
-
+    protected static ?string $navigationParentItem = 'Subscriptions';
+    protected static ?int $navigationSort = 410;
 
     public static function form(Form $form): Form
     {

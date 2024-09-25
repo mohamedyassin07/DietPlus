@@ -18,9 +18,9 @@ class FoodCategoryResource extends Resource
     protected static ?string $model = FoodCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?int $navigationSort = 20;
-    protected static ?string $navigationGroup = 'Plans';
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?int $navigationSort = 210;
+    protected static ?string $navigationParentItem = 'Recipes';
+
 
     public static function form(Form $form): Form
     {

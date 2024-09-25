@@ -17,7 +17,7 @@ class UserRestrictionResource extends Resource
     protected static ?string $model = UserRestriction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 120;
     protected static ?string $navigationParentItem = 'Users';
 
 

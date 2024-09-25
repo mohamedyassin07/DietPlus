@@ -20,9 +20,8 @@ class FoodRestrictionResource extends Resource
     protected static ?string $model = FoodRestriction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
-    protected static ?int $navigationSort = 35;
-    protected static ?string $navigationGroup = 'Plans';
-
+    protected static ?int $navigationSort = 220;
+    protected static ?string $navigationParentItem = 'Recipes';
 
     public static function form(Form $form): Form
     {
