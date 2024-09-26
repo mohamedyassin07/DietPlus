@@ -59,7 +59,7 @@ class Wizard extends Component
         parent::setUp();
 
         $this->registerActions([
-            fn (Wizard $component): Action => $component->getNextAction(),
+            //fn (Wizard $component): Action => $component->getNextAction(),
             fn (Wizard $component): Action => $component->getPreviousAction(),
         ]);
 

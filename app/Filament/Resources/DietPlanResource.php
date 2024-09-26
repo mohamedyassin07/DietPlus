@@ -110,17 +110,12 @@ class DietPlanResource extends Resource
                 ])->skippable()
                     ->columnSpan(2)
                     ->persistStepInQueryString()
-                    // ->nextAction(
-                    //     function (Component $livewire, $record, Action $action) {
-                    //         $action->label('GENERATE PLAN')->color('info');
-                    //         $data = $livewire->form->getState();
-                    //         //dd( $data, $record->deadline, $record->id );
 
-
-
-                    //     }
-                    // )
-                    ,
+                    ->nextAction(
+                        fn (Action $action) => $action->label( false ),
+                    )
+                
+                                    ,
             ]);
     }
 
