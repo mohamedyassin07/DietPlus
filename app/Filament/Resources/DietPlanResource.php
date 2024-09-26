@@ -26,12 +26,14 @@ use Illuminate\Http\Request;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\Builder\Block;
 use Filament\Forms\Components\Tabs;
+use App\Traits\GeneralTrait;
 
 
 class DietPlanResource extends Resource
 {
-    protected static ?string $model = DietPlan::class;
+    use GeneralTrait;
 
+    protected static ?string $model = DietPlan::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?int $navigationSort = 300;
 
@@ -44,20 +46,20 @@ class DietPlanResource extends Resource
                     Wizard\Step::make('Basic Information')
                         ->columns(2)
                         ->schema([
-                                Select::make('user_id')
-                                    ->label('User')
-                                    ->relationship('user', 'name')
-                                    ->options(User::where('user_type', 'Customer')->pluck('name', 'id'))
-                                    ->required(),
-                                Select::make('status_id')
-                                    ->relationship('status', 'name')
-                                    ->required(),
-                                DatePicker::make('deadline')
-                                    ->required(),
-                                TextInput::make('weight')
-                                    ->numeric()
-                                    ->default('100')
-                                    ->required(),
+                            Select::make('user_id')
+                                ->label('User')
+                                ->relationship('user', 'name')
+                                ->options(User::where('user_type', 'Customer')->pluck('name', 'id'))
+                                ->required(),
+                            Select::make('status_id')
+                                ->relationship('status', 'name')
+                                ->required(),
+                            DatePicker::make('deadline')
+                                ->required(),
+                            TextInput::make('weight')
+                                ->numeric()
+                                ->default('100')
+                                ->required(),
                         ]),
 
                     // Step 2: Meals Schedule
@@ -87,21 +89,16 @@ class DietPlanResource extends Resource
                                                         ->live(onBlur: true)
                                                         ->required(),
                                                     Tabs::make('Meals')
-                                                        ->tabs([
-                                                            self::keto_meal_fields('breakfast', 'Breakfast'),
-                                                            self::keto_meal_fields('snack_1', 'Snack 1'),
-                                                            self::keto_meal_fields('lunch', 'Lunch'),
-                                                            self::keto_meal_fields('snack_2', 'Snack 2'),
-                                                            self::keto_meal_fields('dinner', 'Dinner'),
-                                                        ])
+                                                        ->tabs(
+                                                            self::keto_meals_fields(),
+                                                        )
                                                         ->columnSpan(2)
 
 
 
 
                                                 ])
-                                                ->itemLabel(fn(array $state): ?string => $state['day_date'] ?? 'New Day')
-                                                ,
+                                                ->itemLabel(fn(array $state): ?string => $state['day_date'] ?? 'New Day'),
                                         ]),
                                 ]),
                         ]),
@@ -112,10 +109,8 @@ class DietPlanResource extends Resource
                     ->persistStepInQueryString()
 
                     ->nextAction(
-                        fn (Action $action) => $action->label( false ),
-                    )
-                
-                                    ,
+                        fn(Action $action) => $action->label(false),
+                    ),
             ]);
     }
 
@@ -163,27 +158,32 @@ class DietPlanResource extends Resource
         ];
     }
 
-    public static function keto_meal_fields($slug, $name)
+    public static function keto_meals_fields()
     {
-        return Tabs\Tab::make($name)
-            ->schema([
-                Repeater::make($slug)
-                    ->label(false)
-                    ->addActionLabel('Add to ' .  $name)
-                    ->schema([
-                        Grid::make(2)->schema([
-                            Select::make('food_id')
-                                ->label('Food')
-                                ->options(Food::pluck('name', 'id')->toArray())
-                                //->required()
-                                ->columnSpan(1),
-                            TextInput::make('quantity')
-                                ->label('Quantity')
-                                ->numeric()
-                                //->required()
-                                ->columnSpan(1),
+        $meals = self::internal_settings()['keto']['meals'];
+        $fields = [];
+        foreach ($meals as $key => $meal) {
+            $fields[] = Tabs\Tab::make($meal['name'])
+                ->schema([
+                    Repeater::make($key)
+                        ->label(false)
+                        ->addActionLabel('Add to ' .  $meal['name'])
+                        ->schema([
+                            Grid::make(2)->schema([
+                                Select::make('food_id')
+                                    ->label('Food')
+                                    ->options(Food::pluck('name', 'id')->toArray())
+                                    //->required()
+                                    ->columnSpan(1),
+                                TextInput::make('quantity')
+                                    ->label('Quantity')
+                                    ->numeric()
+                                    //->required()
+                                    ->columnSpan(1),
+                            ]),
                         ]),
-                    ]),
-            ]);
+                ]);
+        };
+        return $fields;
     }
 }

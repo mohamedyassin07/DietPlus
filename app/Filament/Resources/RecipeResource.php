@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RecipeResource\Pages;
-use App\Filament\Resources\RecipeResource\RelationManagers;
 use App\Models\Recipe;
 use App\Models\Ingredient;
 use Filament\Forms;
@@ -11,8 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -20,15 +17,15 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Split;
-
+use App\Traits\GeneralTrait;
 
 class RecipeResource extends Resource
 {
-    protected static ?string $model = Recipe::class;
+    use GeneralTrait;
 
+    protected static ?string $model = Recipe::class;
     protected static ?string $navigationIcon = 'heroicon-o-cake';
     protected static ?int $navigationSort = 200;
-
 
     public static function form(Form $form): Form
     {
@@ -40,15 +37,15 @@ class RecipeResource extends Resource
                             ->columnSpan(6)
                             ->required()
                             ->maxLength(255),
-                        TextInput::make('category')
+                        Select::make('category')
                             ->columnSpan(6)
-                            ->required()
-                            ->maxLength(255),
-                        TextInput::make('calories')
-                            ->columnSpan(6)
-                            ->readOnly()
-                            ->placeholder('Wait For Calculate')
-                            ->reactive(),
+                            ->label('Keto Meals')
+                            ->options(function () {
+                                $meals = array_keys(self::internal_settings()['keto']['meals']);
+                                return array_combine($meals, $meals);
+                            })
+                            ->default('breakfast')
+                            ->required(),
                         TextInput::make('fats')
                             ->columnSpan(6)
                             ->readOnly()

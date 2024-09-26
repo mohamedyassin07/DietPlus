@@ -55,14 +55,14 @@ class UserQuizResource extends Resource
                                 TextInput::make('birth_year')
                                     ->label('ما هو عام ميلادك؟')
                                     ->numeric()
+                                    ->required()
                                     ->minValue(1930)
                                     ->maxValue(2020),
-
                                 TextInput::make('weight')
                                     ->label('ما هو وزنك الحالي؟')
                                     ->numeric()
-                                    ->minValue(25)  // أدنى وزن مسموح به
-                                    ->maxValue(300),  // أقصى وزن مسموح به
+                                    ->minValue(25)
+                                    ->maxValue(300),
 
                                 TextInput::make('weight_targeted')
                                     ->label('ما هو الوزن المستهدف؟')
@@ -71,12 +71,14 @@ class UserQuizResource extends Resource
                                     ->maxValue(300),
 
                                 TextInput::make('height')
-                                    ->label('ما هو طولك؟')
+                                    ->label('ما هو طولك ؟؟')
                                     ->numeric()
+                                    ->required()
                                     ->minValue(90)
                                     ->maxValue(200),
                                 Select::make('sex')
                                     ->label('ما هو جنسك؟')
+                                    ->required()
                                     ->options([
                                         'male' => 'ذكر',
                                         'female' => 'أنثى',
@@ -105,11 +107,12 @@ class UserQuizResource extends Resource
                                     ]),
                                 Select::make('physical_activity')
                                     ->label('ما مدى نشاطك البدني؟')
+                                    ->required()
                                     ->options([
-                                        'no_activity' => 'لا أمارس أي نشاط بدني',
-                                        'light_exercise' => 'تمارين خفيفة (1-2 يوم/ بالأسبوع)',
-                                        'moderate_exercise' => 'تمارين متوسطة (3-5 أيام/ بالأسبوع)',
-                                        'intense_exercise' => 'تمارين شاقة (6-7 أيام/ بالأسبوع)',
+                                        'sedentary' => 'لا أمارس أي نشاط بدني',
+                                        'lightly_active' => 'تمارين خفيفة (1-2 يوم/ بالأسبوع)',
+                                        'moderately_active' => 'تمارين متوسطة (3-5 أيام/ بالأسبوع)',
+                                        'very_active' => 'تمارين شاقة (6-7 أيام/ بالأسبوع)',
                                     ]),
                                 Select::make('sleep_hours')
                                     ->label('كم عدد ساعات نومك المعتادة؟')
