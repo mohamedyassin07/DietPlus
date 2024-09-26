@@ -43,11 +43,11 @@ class EditDietPlan extends EditRecord
         //dd( $data, $record->deadline, $record->id , $action );
 
         Notification::make()
-            ->title( $this->record->deadline )
-            ->body('Diet plan has been generated successfully.')
-            ->success()
+            ->title( 'Generating new plan...')
+            ->body( 'simulate it done')
+            ->info()
             ->send();
 
-        $this->redirect($this->getResource()::getUrl(['edit' , 'step' => 'basic-information'], ['record' => $this->record->getKey()]));
+        //$this->redirect($this->getResource()::getUrl(['edit'], ['record' => $this->record->getKey()]));
     }
 }
