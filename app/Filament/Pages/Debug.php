@@ -7,7 +7,7 @@ use App\Models\DietPlan;
 
 class Debug extends Page
 {
-    protected static string $view = 'filament.pages.debug';
+    protected static string $view = 'filament.pages.debug'; 
     protected static ?string $navigationIcon = 'heroicon-o-cog';
     protected static ?int $navigationSort = 1000;
     protected static ?string $navigationGroup = 'Super Admin';
