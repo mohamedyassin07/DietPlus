@@ -31,8 +31,9 @@ class DietPlan extends Model
     {
         return $this->belongsTo(DietPlanStatus::class);
     }
+
     public function generate(){
-        
+
         
     }
 }

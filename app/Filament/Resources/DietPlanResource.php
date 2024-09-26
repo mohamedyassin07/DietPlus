@@ -42,22 +42,22 @@ class DietPlanResource extends Resource
                 Wizard::make([
                     // Step 1: Basic Information
                     Wizard\Step::make('Basic Information')
-                        ->columns(3)
+                        ->columns(2)
                         ->schema([
                                 Select::make('user_id')
                                     ->label('User')
                                     ->relationship('user', 'name')
                                     ->options(User::where('user_type', 'Customer')->pluck('name', 'id'))
-                                    ->required()
-                                    ->columnSpan(1),
+                                    ->required(),
                                 Select::make('status_id')
                                     ->relationship('status', 'name')
-                                    ->required()
-                                    ->columnSpan(1),
+                                    ->required(),
                                 DatePicker::make('deadline')
-                                    ->required()
-                                    ->columnSpan(1),
-                            
+                                    ->required(),
+                                TextInput::make('weight')
+                                    ->numeric()
+                                    ->default('100')
+                                    ->required(),
                         ]),
 
                     // Step 2: Meals Schedule
