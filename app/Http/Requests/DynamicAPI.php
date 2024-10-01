@@ -6,45 +6,48 @@ use Illuminate\Foundation\Auth\User as Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-
 
 class DynamicAPI extends FormRequest
 {
 
     public function handleRequest(Request $request, $model_name, $action = null, $id = null)
     {
+        $bodyContent = $request->getContent();
+        dd( $bodyContent );
+
         $model_class = $this->get_model_class($model_name);
 
         if (method_exists($this, $model_name . '_' . $action )) {
             $method = $model_name . '_' . $action;
             $model_class = $this->get_model_class('User');
-        }elseif (!class_exists($model_class)) {
+        } elseif (!class_exists($model_class)) {
             return $this->response_error('Model not found', 404);
-        }else{
+        } else {
             $method = $action;
         }
 
         $model = $this->get_model_instance($model_class);
 
-        $validation = $this->request_validation( $request, $method, $id );
-        if( $validation ){
-            return $this->response_error( $validation['error'], $validation['error_code'] );
+        $validation = $this->request_validation($request, $method, $id);
+        if ($validation) {
+            return $this->response_error($validation['error'], $validation['error_code']);
         }
 
-        if( $id ){
+        if ($id) {
             $record = $model::find($id);
-            if( ! $record ){
-                return $this->response_error( 'Record not found', 404 );
+            if (!$record) {
+                return $this->response_error('Record not found', 404);
             }
-        }else {
+        } else {
             $record = null;
         }
 
-        $data = $this->$method( $request, $model, $record );
-        return $this->response_data( $data );
+        $data = $this->$method($request, $model, $record);
+        return $this->response_data($data);
     }
+
 
     public function get_model_class( $model_name ){
         return 'App\\Models\\' . ucfirst($model_name);
@@ -81,7 +84,7 @@ class DynamicAPI extends FormRequest
                 'id'    => true
             ],
             'auth_register' => [
-                'method' => 'POST',
+                'method' => 'any',
                 'id'    => false
             ],
             'auth_login' => [
@@ -102,7 +105,7 @@ class DynamicAPI extends FormRequest
             return ['error' => 'Action{'.$request->method().'} not supported', 'error_code' => 404];
         }
 
-        if( $request->method() != $methods[$method]['method'] ){
+        if( 'any' !== $methods[$method]['method'] && $request->method() != $methods[$method]['method'] ){
             return ['error' => 'Request method{'.$request->method().'} not allowed for this action{'.$method.'}', 'error_code' => 404];
         }
 
@@ -111,7 +114,8 @@ class DynamicAPI extends FormRequest
         }
 
         if( ! $methods[$method]['id'] && $id ){
-            return ['error' => 'ID is not supported for this action{'.$request->method().'}', 'error_code' => 404];
+            return ['error' => 'ID {'.$id.'} is not supported for this action{'.$method.'}', 'error_code' => 404];
+            return ['error' => 'ID is not supported for this action{'.$method.'}', 'error_code' => 404];
         }
     }
 
@@ -123,14 +127,16 @@ class DynamicAPI extends FormRequest
         );
     }
 
-    public function response_error($message, $code)
+    public function response_error( $errors, $key , $code = null )
     {
+        $code = $code ? $code : $key;
+        if( is_string( $errors ) ){
+            $errors = [
+                $key => [$errors]
+            ];
+        }
         return response()->json([
-            'errors' => [
-                $code => [
-                    $message
-                ]
-            ]
+            'errors' => $errors,
         ], $code);
     }
     
@@ -181,26 +187,44 @@ class DynamicAPI extends FormRequest
     }
 
     public function auth_register(Request $request, $model)
-    {
-        // التحقق من صحة البيانات
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+    {   
+
+        $bodyContent = $request->getContent();
+        dd( $bodyContent );
+            // الحصول على الـ request body كـ JSON
+        $data = $request->json()->all();
+
+        // طباعة البيانات أو التعامل معها
+        return $this->response_data( $data );
+
+        $validator = Validator::make($request->all(), [
+            'name2222' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
         ]);
-    
-        // إنشاء مستخدم جديد
+
+        if ($validator->fails()) {
+            throw new HttpResponseException(response()->json([
+                'errors' => $validator->errors()
+            ]));
+        }
+
+        $validatedData = $request->validate([
+            'namew' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+        ], [], [], true);
+        
         $user = $model::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']), // تشفير كلمة المرور
+            'password' => Hash::make($validatedData['password']),
         ]);
     
-        // إنشاء token للمستخدم الجديد
         $token = $user->createToken('authToken')->plainTextToken;
     
-        // إرجاع معلومات المستخدم و الـ token
         return response()->json([
+            'r' => true,
             'user' => $user,
             'token' => $token,
         ], 201);
@@ -237,7 +261,7 @@ class DynamicAPI extends FormRequest
     }
 
 
-    public function failedValidation(Validator $validator)
+    public function failedValidation2(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors()
