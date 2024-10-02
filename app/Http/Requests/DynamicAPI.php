@@ -1,63 +1,214 @@
-<?php 
+<?php
+
 namespace App\Http\Requests;
 
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Auth\User as Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
+use App\Traits\API_Validation_Rules;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class DynamicAPI extends FormRequest
 {
+    use API_Validation_Rules;
 
-    public function handleRequest(Request $request, $model_name, $action = null, $id = null)
+    public $request;
+    public $endpoint;
+    public $action;
+    public $model;
+    public $record;
+    public $id;
+    public $validated_data;
+    public $errors;
+
+    public function handleRequest(Request $request, $endpoint, $action = null, $id = null)
     {
-        $bodyContent = $request->getContent();
-        dd( $bodyContent );
-
-        $model_class = $this->get_model_class($model_name);
-
-        if (method_exists($this, $model_name . '_' . $action )) {
-            $method = $model_name . '_' . $action;
-            $model_class = $this->get_model_class('User');
-        } elseif (!class_exists($model_class)) {
+        if( ! $this->set_model( $endpoint ) ){
             return $this->response_error('Model not found', 404);
-        } else {
-            $method = $action;
         }
 
-        $model = $this->get_model_instance($model_class);
+        if (! method_exists($this, $action)) {
+            return $this->response_error('Invalid action', 404);
+        }
 
-        $validation = $this->request_validation($request, $method, $id);
-        if ($validation) {
-            return $this->response_error($validation['error'], $validation['error_code']);
+        $this->endpoint = $endpoint;
+        $this->request = $request;
+        $this->action= $action;
+        $this->id = $id;
+
+        $compatibility_check = $this->request_compatibility();
+        if ($compatibility_check !== true ) {
+            return $this->response_error( $compatibility_check, 404);
         }
 
         if ($id) {
-            $record = $model::find($id);
-            if (!$record) {
+            $this->record = $this->model::find($id);
+            if (! $this->record ) {
                 return $this->response_error('Record not found', 404);
             }
-        } else {
-            $record = null;
         }
 
-        $data = $this->$method($request, $model, $record);
-        return $this->response_data($data);
+        $data = $this->$action();
+        return $data;
+    }
+    
+    public function set_model($endpoint)
+    {
+        $model_class = 'App\\Models\\' . Str::studly(Str::singular($endpoint));
+        if (! class_exists($model_class)) {
+            return false;
+        }
+
+        return $this->model = new $model_class;
     }
 
-
-    public function get_model_class( $model_name ){
-        return 'App\\Models\\' . ucfirst($model_name);
+    public function response_data($data , $code = 200)
+    {
+        return response()->json( ['data' => $data ], $code );
     }
 
-    public function get_model_instance( $model_class ){
-        return  $model_class::getModel();
+    public function response_error( $errors, $code = 400 )
+    {
+        $errors = is_string($errors) ? [ $errors] : $errors;
+        return response()->json( ['errors' => $errors ], $code );
     }
 
-    public function request_validation( $request, $method , $id ){
+    public function validated_data(){
+        $validator = Validator::make($this->request->all(), $this->fields() );
+
+        if ($validator->fails()) {
+            $this->errors = $validator->errors()->all();
+            return false;
+        }
+        
+        return $this->validated_data = $validator->validated();
+    }
+
+    public function add()
+    {
+        if( ! $this->validated_data() ) {
+            return $this->response_error( $this->errors, 400);
+        }
+
+        $this->record = $this->model->create($this->validated_data);
+        return $this->response_data( $this->record );
+    }
+    
+    public function register(){
+        $this->request->merge( ['user_type' => 'Customer'] );
+        return $this->add();
+    }
+
+    public function login(){
+        if( ! $this->validated_data() ) {
+            return $this->response_error( $this->errors, 400);
+        }
+
+        if (!Auth::attempt([
+            'email' => $this->request->input('email'),
+            'password' => $this->request->input('password')
+        ])) {
+            return $this->response_error('Invalid credentials', 401);
+        }
+    
+        $user = Auth::user();
+        
+        $token = $user->createToken('auth_token')->plainTextToken;
+    
+        return $this->response_data([
+            'token' => $token,
+        ]);
+    }
+    
+
+    public function show()
+    {
+        return $this->response_data( $this->record->toArray());
+    }
+
+    public function edit()
+    {
+        $this->record->update($this->validated_data);
+        return $this->response_data($this->record->fresh());
+    }
+    
+    public function delete()
+    {
+        $id = $this->record->id;
+        $this->record->delete();
+    
+        return $this->response_data([
+            'message' => 'Record deleted successfully',
+            'deleted_id' => $id
+        ]);
+    }
+
+    public function list()
+    {
+        $query = $this->model->query();
+
+        $filters = $this->request->input('filters', []);
+        foreach ($filters as $filter) {
+            if (! isset($filter['field']) ||  ! isset($filter['operator']) ||  !isset($filter['value'])) {
+                return $this->response_error('Every filter MUST contains: field,operator,value ', 404);
+            }
+
+            $field = $filter['field'];
+            $operator = $filter['operator'];
+            $value = $filter['value'];
+
+            if (! in_array($field, $this->model->getFillable())) {
+                return $this->response_error('This field {{' . $field . '}} not filterable', 404);
+            }
+
+            switch ($operator) {
+                case '=':
+                case '!=':
+                case '>':
+                case '<':
+                case '>=':
+                case '<=':
+                    $query->where($field, $operator, $value);
+                    break;
+                case 'like':
+                    $query->where($field, 'LIKE', "%$value%");
+                    break;
+                case 'between':
+                    if (is_array($value) && count($value) == 2) {
+                        $query->whereBetween($field, $value);
+                    }
+                    break;
+                case 'in':
+                    if (is_array($value)) {
+                        $query->whereIn($field, $value);
+                    }
+                    break;
+            }
+        }
+
+        $sortField = $this->request->input('sort_by', 'id');
+        $sortDirection = $this->request->input('sort_direction', 'asc');
+        if (in_array($sortField, $this->model->getFillable())) {
+            $query->orderBy($sortField, $sortDirection);
+        }
+
+        $perPage = $this->request->input('per_page', 10);
+
+        return $query->paginate($perPage);
+    }
+
+    public function fields()
+    {
+        $fields = self::get_validations_rules( $this->action );
+        if( ! $fields ) {
+            $fields = self::get_validations_rules( $this->endpoint );
+        }
+        return $fields;
+    }
+
+    public function request_compatibility()
+    {
         $methods = [
             'list' => [
                 'method' => 'GET',
@@ -71,8 +222,8 @@ class DynamicAPI extends FormRequest
                 'method' => 'POST',
                 'id'    => false
             ],
-            'update' => [
-                'method' => 'PUT',
+            'edit' => [
+                'method' => 'POST',
                 'id'    => true
             ],
             'delete' => [
@@ -83,188 +234,40 @@ class DynamicAPI extends FormRequest
                 'method' => 'GET',
                 'id'    => true
             ],
-            'auth_register' => [
-                'method' => 'any',
-                'id'    => false
-            ],
-            'auth_login' => [
+            'register' => [
                 'method' => 'POST',
                 'id'    => false
             ],
-            'auth_logout' => [
+            'login' => [
                 'method' => 'POST',
                 'id'    => false
             ],
-            'auth_password_reset' => [
+            'logout' => [
+                'method' => 'POST',
+                'id'    => false
+            ],
+            'password_reset' => [
                 'method' => 'POST',
                 'id'    => false
             ],
         ];
 
-        if( ! isset($methods[$method])  ){
-            return ['error' => 'Action{'.$request->method().'} not supported', 'error_code' => 404];
+        if (! isset($methods[$this->action])) {
+            return 'Action{ ' . $this->action . ' } not supported';
         }
 
-        if( 'any' !== $methods[$method]['method'] && $request->method() != $methods[$method]['method'] ){
-            return ['error' => 'Request method{'.$request->method().'} not allowed for this action{'.$method.'}', 'error_code' => 404];
+        if ( $this->request->method() !== $methods[$this->action]['method'] ) {
+            return 'Method { ' . $this->request->method() . ' } not allowed for { ' . $this->action . ' } action';
         }
 
-        if( $methods[$method]['id'] && ! $id ){
-            return ['error' => 'ID is required', 'error_code' => 404];
+        if ($methods[$this->action]['id'] && ! $this->id ) {
+            return 'URL paremater { ID } is required';
         }
 
-        if( ! $methods[$method]['id'] && $id ){
-            return ['error' => 'ID {'.$id.'} is not supported for this action{'.$method.'}', 'error_code' => 404];
-            return ['error' => 'ID is not supported for this action{'.$method.'}', 'error_code' => 404];
-        }
-    }
-
-    public function response_data($data)
-    {
-        return response()->json(
-            $data,
-            200
-        );
-    }
-
-    public function response_error( $errors, $key , $code = null )
-    {
-        $code = $code ? $code : $key;
-        if( is_string( $errors ) ){
-            $errors = [
-                $key => [$errors]
-            ];
-        }
-        return response()->json([
-            'errors' => $errors,
-        ], $code);
-    }
-    
-    public function list(Request $request, $model, $record ){
-
-        $query = $model->query();
-
-        if (1 > 2) {
-            $query->where('user_id', $user_id);
-        }
-        
-        return $query->paginate(10);
-    }
-
-    public function fields(Request $request, $model, $record ){
-
-        $fillable_fields = $model->getFillable();
-        $table = $model->getTable();
-        $fields_with_types = [];
-
-        foreach ($fillable_fields as $field) {
-            $fields_with_types[] = [
-                'field' => $field,
-                'type'  => Schema::getColumnType($table, $field)
-            ];
+        if (!$methods[$this->action]['id'] && $this->id ) {
+            return 'URL paremater { ID } is not supported for action { ' . $this->action . ' }' ;
         }
 
-        return $fields_with_types;
-    }
-
-    public function add(Request $request, $model, $record ){
-        // create the record and return the record data
-        return $model->create($request->all());
-    }
-
-    public function show(Request $request, $model, $record ){
-        return $record->toArray();
-    }
-
-    public function update(Request $request, $model, $record ){
-        // update the record and return the record data
-        $record->update($request->all());
-    }
-
-    public function delete(Request $request, $model, $record ){
-        // delete the record and return the record data
-        $record->delete();
-    }
-
-    public function auth_register(Request $request, $model)
-    {   
-
-        $bodyContent = $request->getContent();
-        dd( $bodyContent );
-            // الحصول على الـ request body كـ JSON
-        $data = $request->json()->all();
-
-        // طباعة البيانات أو التعامل معها
-        return $this->response_data( $data );
-
-        $validator = Validator::make($request->all(), [
-            'name2222' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
-
-        if ($validator->fails()) {
-            throw new HttpResponseException(response()->json([
-                'errors' => $validator->errors()
-            ]));
-        }
-
-        $validatedData = $request->validate([
-            'namew' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ], [], [], true);
-        
-        $user = $model::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-        ]);
-    
-        $token = $user->createToken('authToken')->plainTextToken;
-    
-        return response()->json([
-            'r' => true,
-            'user' => $user,
-            'token' => $token,
-        ], 201);
-    }
-    
-    public function auth_login(Request $request, $model)
-    {
-        // التحقق من صحة البيانات
-        $validatedData = $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-    
-        // البحث عن المستخدم بواسطة البريد الإلكتروني
-        $user = $model::where('email', $validatedData['email'])->first();
-    
-        // التحقق من وجود المستخدم وتطابق كلمة المرور
-        if (!$user || !Hash::check($validatedData['password'], $user->password)) {
-            return $this->response_error('Invalid credentials', 401);
-        }
-    
-        // إنشاء token للمستخدم
-        $token = $user->createToken('authToken')->plainTextToken;
-    
-        // إرجاع معلومات المستخدم و الـ token
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 200);
-    }
-        public function rules()
-    {
-        return [];
-    }
-
-
-    public function failedValidation2(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'errors' => $validator->errors()
-        ]));
+        return true;
     }
 }
