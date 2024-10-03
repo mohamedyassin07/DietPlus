@@ -24,7 +24,7 @@ class DynamicAPI extends FormRequest
 
     public function handleRequest(Request $request, $endpoint, $action = null, $id = null)
     {
-        if( ! $this->set_model( $endpoint ) ){
+        if (! $this->set_model($endpoint)) {
             return $this->response_error('Model not found', 404);
         }
 
@@ -34,17 +34,17 @@ class DynamicAPI extends FormRequest
 
         $this->endpoint = $endpoint;
         $this->request = $request;
-        $this->action= $action;
+        $this->action = $action;
         $this->id = $id;
 
         $compatibility_check = $this->request_compatibility();
-        if ($compatibility_check !== true ) {
-            return $this->response_error( $compatibility_check, 404);
+        if ($compatibility_check !== true) {
+            return $this->response_error($compatibility_check, 404);
         }
 
         if ($id) {
             $this->record = $this->model::find($id);
-            if (! $this->record ) {
+            if (! $this->record) {
                 return $this->response_error('Record not found', 404);
             }
         }
@@ -52,7 +52,7 @@ class DynamicAPI extends FormRequest
         $data = $this->$action();
         return $data;
     }
-    
+
     public function set_model($endpoint)
     {
         $model_class = 'App\\Models\\' . Str::studly(Str::singular($endpoint));
@@ -63,46 +63,49 @@ class DynamicAPI extends FormRequest
         return $this->model = new $model_class;
     }
 
-    public function response_data($data , $code = 200)
+    public function response_data($data, $code = 200)
     {
-        return response()->json( ['data' => $data ], $code );
+        return response()->json(['data' => $data], $code);
     }
 
-    public function response_error( $errors, $code = 400 )
+    public function response_error($errors, $code = 400)
     {
-        $errors = is_string($errors) ? [ $errors] : $errors;
-        return response()->json( ['errors' => $errors ], $code );
+        $errors = is_string($errors) ? [$errors] : $errors;
+        return response()->json(['errors' => $errors], $code);
     }
 
-    public function validated_data(){
-        $validator = Validator::make($this->request->all(), $this->fields() );
+    public function validated_data()
+    {
+        $validator = Validator::make($this->request->all(), $this->fields());
 
         if ($validator->fails()) {
             $this->errors = $validator->errors()->all();
             return false;
         }
-        
+
         return $this->validated_data = $validator->validated();
     }
 
     public function add()
     {
-        if( ! $this->validated_data() ) {
-            return $this->response_error( $this->errors, 400);
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
         }
 
         $this->record = $this->model->create($this->validated_data);
-        return $this->response_data( $this->record );
+        return $this->response_data($this->record);
     }
-    
-    public function register(){
-        $this->request->merge( ['user_type' => 'Customer'] );
+
+    public function register()
+    {
+        $this->request->merge(['user_type' => 'Customer']);
         return $this->add();
     }
 
-    public function login(){
-        if( ! $this->validated_data() ) {
-            return $this->response_error( $this->errors, 400);
+    public function login()
+    {
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
         }
 
         if (!Auth::attempt([
@@ -111,20 +114,21 @@ class DynamicAPI extends FormRequest
         ])) {
             return $this->response_error('Invalid credentials', 401);
         }
-    
+
         $user = Auth::user();
-        
+
         $token = $user->createToken('auth_token')->plainTextToken;
-    
+
         return $this->response_data([
             'token' => $token,
+            'user' => $user,
         ]);
     }
-    
+
 
     public function show()
     {
-        return $this->response_data( $this->record->toArray());
+        return $this->response_data($this->record->toArray());
     }
 
     public function edit()
@@ -132,12 +136,12 @@ class DynamicAPI extends FormRequest
         $this->record->update($this->validated_data);
         return $this->response_data($this->record->fresh());
     }
-    
+
     public function delete()
     {
         $id = $this->record->id;
         $this->record->delete();
-    
+
         return $this->response_data([
             'message' => 'Record deleted successfully',
             'deleted_id' => $id
@@ -200,9 +204,9 @@ class DynamicAPI extends FormRequest
 
     public function fields()
     {
-        $fields = self::get_validations_rules( $this->action );
-        if( ! $fields ) {
-            $fields = self::get_validations_rules( $this->endpoint );
+        $fields = self::get_validations_rules($this->action);
+        if (! $fields) {
+            $fields = self::get_validations_rules($this->endpoint);
         }
         return $fields;
     }
@@ -256,16 +260,16 @@ class DynamicAPI extends FormRequest
             return 'Action{ ' . $this->action . ' } not supported';
         }
 
-        if ( $this->request->method() !== $methods[$this->action]['method'] ) {
+        if ($this->request->method() !== $methods[$this->action]['method']) {
             return 'Method { ' . $this->request->method() . ' } not allowed for { ' . $this->action . ' } action';
         }
 
-        if ($methods[$this->action]['id'] && ! $this->id ) {
+        if ($methods[$this->action]['id'] && ! $this->id) {
             return 'URL paremater { ID } is required';
         }
 
-        if (!$methods[$this->action]['id'] && $this->id ) {
-            return 'URL paremater { ID } is not supported for action { ' . $this->action . ' }' ;
+        if (!$methods[$this->action]['id'] && $this->id) {
+            return 'URL paremater { ID } is not supported for action { ' . $this->action . ' }';
         }
 
         return true;
