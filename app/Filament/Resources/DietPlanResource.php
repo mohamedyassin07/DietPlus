@@ -84,20 +84,18 @@ class DietPlanResource extends Resource
                                                 ->minItems(1)
                                                 ->required()
                                                 ->columnSpan('full')
+                                                ->columns(12)
                                                 ->schema([
                                                     DatePicker::make('day_date')
                                                         ->label('Day Date')
                                                         ->live(onBlur: true)
+                                                        ->columnSpan(2)
                                                         ->required(),
                                                     Tabs::make('Meals')
                                                         ->tabs(
                                                             self::keto_meals_fields(),
                                                         )
-                                                        ->columnSpan(2)
-
-
-
-
+                                                        ->columnSpan(10)
                                                 ])
                                                 ->itemLabel(fn(array $state): ?string => $state['day_date'] ?? 'New Day'),
                                         ]),
