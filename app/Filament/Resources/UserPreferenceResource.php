@@ -24,18 +24,15 @@ class UserPreferenceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-heart';
     protected static ?string $navigationParentItem = 'Users';
 
-
-
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Select::make('user_id')
-                    ->relationship('user', 'name', fn ($query) => $query->where('user_type', 'customer'))
+                    ->relationship('user', 'name', fn($query) => $query->where('user_type', 'customer'))
                     ->required(),
-                Select::make('food_id')
-                    ->relationship('food', 'name')
+                Select::make('recipe_id')
+                    ->relationship('recipe', 'name')
                     ->required(),
                 Select::make('preference_level')
                     ->options([
@@ -54,16 +51,16 @@ class UserPreferenceResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('user.name')->label('User Name'),
-                TextColumn::make('food.name')->label('Food Name'),
+                TextColumn::make('recipe.name')->label('Recipe Name'),
                 TextColumn::make('preference_level')->label('Preference Level'),
             ])
             ->filters([
                 SelectFilter::make('user_id')
                     ->relationship('user', 'name')
                     ->label('User'),
-                SelectFilter::make('food_id')
-                    ->relationship('food', 'name')
-                    ->label('Food'),
+                SelectFilter::make('recipe_id')
+                    ->relationship('recipe', 'name')
+                    ->label('Recipe'),
                 SelectFilter::make('preference_level')
                     ->options([
                         '1' => '1',

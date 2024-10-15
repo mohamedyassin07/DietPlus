@@ -22,8 +22,9 @@ class UserPreference extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function food()
+    public function recipe()
     {
-        return $this->belongsTo(Food::class);
+        return $this->belongsTo(Recipe::class);
     }
+        
 }
