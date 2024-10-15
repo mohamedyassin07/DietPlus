@@ -79,11 +79,11 @@ class UserResource extends Resource
                                                 Repeater::make('user_preferences')
                                                     ->relationship('userPreferences')
                                                     ->schema([
-                                                        Select::make('food_id')
-                                                            ->relationship('food', 'name')
+                                                        Select::make('recipe_id')
+                                                            ->relationship('recipe', 'name')
                                                             ->required()
                                                             ->columnSpan(8)
-                                                            ->label('Food'),
+                                                            ->label('Recipe'),
                                                         Select::make('preference_level')
                                                             ->columnSpan(4)
                                                             ->options([
