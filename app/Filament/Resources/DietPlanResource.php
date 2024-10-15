@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\DietPlanResource\Pages;
 use App\Models\DietPlan;
 use App\Models\Food;
+use App\Models\Recipe;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Tables;
@@ -170,15 +171,15 @@ class DietPlanResource extends Resource
                         ->addActionLabel('Add to ' .  $meal['name'])
                         ->schema([
                             Grid::make(2)->schema([
-                                Select::make('food_id')
-                                    ->label('Food')
-                                    ->options(Food::pluck('name', 'id')->toArray())
-                                    //->required()
+                                Select::make('recipe_id')
+                                    ->label('Recipe')
+                                    ->options(Recipe::pluck('name', 'id')->toArray())
+                                    ->required()
                                     ->columnSpan(1),
                                 TextInput::make('quantity')
                                     ->label('Quantity')
                                     ->numeric()
-                                    //->required()
+                                    ->required()
                                     ->columnSpan(1),
                             ]),
                         ]),

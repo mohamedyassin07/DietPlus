@@ -17,7 +17,7 @@ trait GeneralTrait
                         'order' => 3,
                     ],
                     'snack' => [
-                        'name' => 'Lunch',
+                        'name' => 'Snack',
                         'calories' => 400,
                         'fats' => 20,
                         'protein' => 20,
