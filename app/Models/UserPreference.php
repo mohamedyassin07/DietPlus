@@ -10,10 +10,9 @@ class UserPreference extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Define the fillable fields
     protected $fillable = [
         'user_id',
-        'food_id',
+        'recipe_id',
         'preference_level',
     ];
 
@@ -26,5 +25,4 @@ class UserPreference extends Model
     {
         return $this->belongsTo(Recipe::class);
     }
-        
 }
