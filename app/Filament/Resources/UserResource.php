@@ -42,68 +42,73 @@ class UserResource extends Resource
                         Tabs\Tab::make('Info')
                             ->schema([
                                 Split::make([
-                                    Section::make([
-                                        TextInput::make('name')->required(),
-                                        Select::make('user_type')
-                                            ->options([
-                                                'Admin' => 'Admin',
-                                                'Employee' => 'Employee',
-                                                'Customer' => 'Customer',
-                                            ])->required(),
-                                        TextInput::make('email')->email()->required(),
-                                        TextInput::make('password')
-                                            ->password()
-                                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                                            ->dehydrated(fn($state) => filled($state)),
-                                        DateTimePicker::make('email_verified_at')->label('Email Verified At'),
-                                        FileUpload::make('image')->avatar(),
-                                    ]),
-                                    Section::make([
-                                        Fieldset::make('Restrictions')
-                                            ->schema([
-                                                Repeater::make('user_restrictions')
-                                                    ->relationship('userRestrictions')
-                                                    ->simple(
-                                                        Select::make('restriction_id')
-                                                            ->relationship('restriction', 'name')
-                                                            ->required()
-                                                            ->label('Restriction'),
-                                                    )
-                                                    ->label(false)
-                                                    ->addActionLabel('Add Restriction')
-                                                    ->minItems(0)
-                                                    ->columnSpan(2),
-                                            ]),
-                                        Fieldset::make('Preferences')
-                                            ->schema([
-                                                Repeater::make('user_preferences')
-                                                    ->relationship('userPreferences')
-                                                    ->schema([
-                                                        Select::make('recipe_id')
-                                                            ->relationship('recipe', 'name')
-                                                            ->required()
-                                                            ->columnSpan(8)
-                                                            ->label('Recipe'),
-                                                        Select::make('preference_level')
-                                                            ->columnSpan(4)
-                                                            ->options([
-                                                                '1' => '1',
-                                                                '2' => '2',
-                                                                '3' => '3',
-                                                                '4' => '4',
-                                                                '5' => '5',
-                                                            ])
-                                                            ->required()
-                                                            ->label('Preference Level'),
-                                                    ])
-                                                    ->label(false)
-                                                    ->addActionLabel('Add Preference')
-                                                    ->minItems(0)
-                                                    ->columns(12)
-                                                    ->columnSpan(2),
-                                            ]),
-                                    ]),
-                                ]),
+                                    Section::make(false)
+                                        ->columnSpan(5)
+                                        ->grow(false)
+                                        ->schema([
+                                            TextInput::make('name')->required(),
+                                            Select::make('user_type')
+                                                ->options([
+                                                    'Admin' => 'Admin',
+                                                    'Employee' => 'Employee',
+                                                    'Customer' => 'Customer',
+                                                ])->required(),
+                                            TextInput::make('email')->email()->required(),
+                                            TextInput::make('password')
+                                                ->password()
+                                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                                                ->dehydrated(fn($state) => filled($state)),
+                                            DateTimePicker::make('email_verified_at')->label('Email Verified At'),
+                                            FileUpload::make('image')->avatar(),
+                                        ]),
+                                    Section::make(false)
+                                        ->columnSpan(7)
+                                        ->schema([
+                                            Fieldset::make('Restrictions')
+                                                ->schema([
+                                                    Repeater::make('user_restrictions')
+                                                        ->relationship('userRestrictions')
+                                                        ->simple(
+                                                            Select::make('restriction_id')
+                                                                ->relationship('restriction', 'name')
+                                                                ->required()
+                                                                ->label('Restriction'),
+                                                        )
+                                                        ->label(false)
+                                                        ->addActionLabel('Add Restriction')
+                                                        ->minItems(0)
+                                                        ->columnSpan(2),
+                                                ]),
+                                            Fieldset::make('Preferences')
+                                                ->schema([
+                                                    Repeater::make('user_preferences')
+                                                        ->relationship('userPreferences')
+                                                        ->schema([
+                                                            Select::make('recipe_id')
+                                                                ->relationship('recipe', 'name')
+                                                                ->required()
+                                                                ->columnSpan(8)
+                                                                ->label('Recipe'),
+                                                            Select::make('preference_level')
+                                                                ->columnSpan(4)
+                                                                ->options([
+                                                                    '1' => '1',
+                                                                    '2' => '2',
+                                                                    '3' => '3',
+                                                                    '4' => '4',
+                                                                    '5' => '5',
+                                                                ])
+                                                                ->required()
+                                                                ->label('Preference Level'),
+                                                        ])
+                                                        ->label(false)
+                                                        ->addActionLabel('Add Preference')
+                                                        ->minItems(0)
+                                                        ->columns(12)
+                                                        ->columnSpan(2),
+                                                ]),
+                                        ]),
+                                ])->columnSpan(12),
                             ]),
                         Tabs\Tab::make('Quizzes')
                             ->schema([
