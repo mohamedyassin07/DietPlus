@@ -45,7 +45,8 @@ trait GeneralTrait
                     'over_calories' => 50,
                     'less_calories' => 50,
                 ]
-            ]
+            ],
+            'otp_validity_duration' => 60,
         ];
     }
 }

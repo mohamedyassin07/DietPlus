@@ -12,11 +12,11 @@ use App\Models\User;
 use App\Models\PasswordResetToken;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordResetMail;
-
+use App\Traits\GeneralTrait;
 
 class DynamicAPI extends FormRequest
 {
-    use API_Validation_Rules;
+    use API_Validation_Rules , GeneralTrait;
 
     public $request;
     public $endpoint;
@@ -32,7 +32,7 @@ class DynamicAPI extends FormRequest
         if (! $this->set_model($endpoint)) {
             return $this->response_error('Model not found', 404);
         }
-        
+
         $action = str_replace('-', '_', $action);
         if (! method_exists($this, $action)) {
             return $this->response_error('Invalid action', 404);
@@ -132,38 +132,72 @@ class DynamicAPI extends FormRequest
         ]);
     }
 
-public function send_otp()
-{
-    if (! $this->validated_data()) {
-        return $this->response_error($this->errors, 400);
+    public function send_otp()
+    {
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
+        }
+
+        $user = User::where('email', $this->validated_data['email'])->first();
+
+        if (! $user) {
+            return $this->response_error('User not found', 404);
+        }
+
+        $otp = rand(1000, 9999);
+        $passwordResetToken = PasswordResetToken::updateOrCreate(
+            ['email' => $user->email],
+            ['token' => $otp, 'created_at' => now()]
+        );
+
+        // TODO::send email
+        // $resetLink = url('/password-reset?token=' . $otp);
+        // Mail::to($user->email)->send(new PasswordResetMail($resetLink));
+
+        // TODO::send otp to mobile
+
+        // TODO::tries counter max 3 times or it will be blocked
+
+        return $this->response_data([
+            'user' => $user,
+            'otp' => $otp,
+            //'message' => 'Password reset email has been sent.',
+        ]);
     }
 
-    $user = User::where('email', $this->validated_data['email'])->first();
+    public function verify_otp()
+    {
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
+        }
 
-    if (! $user) {
-        return $this->response_error('User not found', 404);
+        $user = User::where('email', $this->validated_data['email'])->first();
+        if (! $user) {
+            return $this->response_error('User not found', 404);
+        }
+
+        $passwordResetToken = PasswordResetToken::where('email', $user->email)
+            ->where('token', $this->validated_data['otp'])
+            ->first();
+
+        if (! $passwordResetToken) {
+            return $this->response_error('Invalid OTP', 400);
+        }
+        
+        $otp_validity_duration = GeneralTrait::internal_settings()['otp_validity_duration'];
+        if (now()->diffInMinutes($passwordResetToken->created_at) > $otp_validity_duration) {
+            return $this->response_error('OTP has expired', 400);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        $passwordResetToken->delete();
+
+        return $this->response_data([
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
-
-    $otp = rand(1000, 9999);
-    $passwordResetToken = PasswordResetToken::updateOrCreate(
-        ['email' => $user->email],
-        ['token' => $otp, 'created_at' => now()]
-    );
-
-    // TODO::send email
-    // $resetLink = url('/password-reset?token=' . $otp);
-    // Mail::to($user->email)->send(new PasswordResetMail($resetLink));
-
-    // TODO::send otp to mobile
-
-    // TODO::tries counter max 3 times or it will be blocked
-
-    return $this->response_data([
-        'user' => $user,
-        'otp' => $otp,
-        //'message' => 'Password reset email has been sent.',
-    ]);
-}
 
     public function show()
     {
@@ -297,6 +331,10 @@ public function send_otp()
                 'method' => 'POST',
                 'id'    => false
             ],
+            'verify_otp' => [
+                'method' => 'POST',
+                'id'    => false
+            ]
         ];
 
         if (! isset($methods[$this->action])) {

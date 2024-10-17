@@ -101,6 +101,10 @@ trait API_Validation_Rules
             'send_otp' => [
                 'email' => 'required|email',
             ],
+            'verify_otp' => [
+                'email' => 'required|email',
+                'otp' => 'required|numeric',
+            ],
         ];
 
         return $rules[$model] ?? [];
