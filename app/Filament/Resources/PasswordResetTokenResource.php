@@ -33,7 +33,8 @@ class PasswordResetTokenResource extends Resource
                 TextInput::make('email')
                     ->label('Email')
                     ->required()
-                    ->email(),
+                    ->email()
+                    ->unique('password_reset_tokens', 'email'),
                 TextInput::make('token')
                     ->label('Token')
                     ->required(),
@@ -56,6 +57,7 @@ class PasswordResetTokenResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
