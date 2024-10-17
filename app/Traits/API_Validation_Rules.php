@@ -6,6 +6,8 @@ trait API_Validation_Rules
 {
     public static function get_validations_rules( $model )
     {
+        $password_rules = 'required|string|min:8|max:255';
+
         $rules = [
             'diet-plans' => [
                 'user_id' => 'required|exists:users,id',
@@ -86,7 +88,7 @@ trait API_Validation_Rules
             'users' => [
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
-                'password' => 'required|min:8',
+                'password' => $password_rules,
                 'user_type' => 'required|in:Admin,Employee,Customer',
                 'image' => 'nullable|image|max:2048',
             ],
@@ -96,7 +98,7 @@ trait API_Validation_Rules
             ],
             'login' => [
                 'email' => 'required|email',
-                'password' => 'required|min:8',
+                'password' => $password_rules,
             ],
             'send_otp' => [
                 'email' => 'required|email',
@@ -108,7 +110,11 @@ trait API_Validation_Rules
             'reset_password' => [
                 'email' => 'required|email',
                 'otp' => 'required|numeric',
-                'password' => 'required|min:8',
+                'new_password' => $password_rules,
+            ],
+            'change_password' =>[
+                'current_password' => $password_rules,
+                'new_password' => $password_rules,
             ],
         ];
 

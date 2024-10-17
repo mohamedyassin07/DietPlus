@@ -13,6 +13,7 @@ use App\Models\PasswordResetToken;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordResetMail;
 use App\Traits\GeneralTrait;
+use Illuminate\Support\Facades\Hash;
 
 class DynamicAPI extends FormRequest
 {
@@ -156,7 +157,7 @@ class DynamicAPI extends FormRequest
         ]);
     }
 
-    public function is_otp_verified(){
+    public function is_otp_verified( $delete = false ){
         $this->user = User::where('email', $this->validated_data['email'])->first();
         if (! $this->user ) {
             return $this->errors = ['User not found'];
@@ -175,7 +176,10 @@ class DynamicAPI extends FormRequest
             return $this->errors = ['OTP has expired'];
         }
 
-        $reset_token->delete();
+        if( $delete ){
+            $reset_token->delete();
+        }
+
         return true;
     }
 
@@ -197,17 +201,44 @@ class DynamicAPI extends FormRequest
             return $this->response_error($this->errors, 400);
         }
 
-        if( $this->is_otp_verified() !== true ){
+        if( $this->is_otp_verified( true ) !== true ){
             return $this->response_error($this->errors, 400);
         }
 
         $this->user->update([
-            'password' => $this->validated_data['password']
+            'new_password' => $this->validated_data['new_password']
         ]);
+
+        $token = $this->user->createToken('diet_plus_auth_token')->plainTextToken;
 
         return $this->response_data([
             'message' => 'Password reset successfully',
             'user' => $this->user,
+            'token' => $token,
+        ]);
+    }
+
+    public function change_password(){
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
+        }
+
+        if (!Hash::check($this->validated_data['current_password'], $this->user->password)) {
+            return $this->response_error('Current password field is incorrect', 400);
+        }
+
+        $this->user->update([
+            'new_password' => $this->validated_data['new_password']
+        ]);
+
+        //TODO:: delete the current token or make it expired
+        //TODO:: add  expires_at date
+        $token = $this->user->createToken('diet_plus_auth_token')->plainTextToken;
+
+        return $this->response_data([
+            'message' => 'Password changed successfully',
+            'user' => $this->user,
+            'token' => $token,
         ]);
     }
 
@@ -357,6 +388,11 @@ class DynamicAPI extends FormRequest
             'reset_password' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'id'    => false
+            ],
+            'change_password' => [
+                'method' => 'POST',
+                'auth'  => true,
                 'id'    => false
             ],
         ];
