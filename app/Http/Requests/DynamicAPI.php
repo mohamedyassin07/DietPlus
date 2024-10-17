@@ -242,6 +242,13 @@ class DynamicAPI extends FormRequest
         ]);
     }
 
+    public function check_token(){
+        return $this->response_data([
+            'message' => 'Token is valid',
+            'user' => $this->user,
+        ]);
+    }
+
     public function show()
     {
         return $this->response_data($this->record->toArray());
@@ -391,6 +398,11 @@ class DynamicAPI extends FormRequest
                 'id'    => false
             ],
             'change_password' => [
+                'method' => 'POST',
+                'auth'  => true,
+                'id'    => false
+            ],
+            'check_token' => [
                 'method' => 'POST',
                 'auth'  => true,
                 'id'    => false
