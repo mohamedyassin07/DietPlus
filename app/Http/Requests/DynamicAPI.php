@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Validator;
 use App\Traits\API_Validation_Rules;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\PasswordResetToken;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordResetMail;
+
 
 class DynamicAPI extends FormRequest
 {
@@ -27,7 +32,8 @@ class DynamicAPI extends FormRequest
         if (! $this->set_model($endpoint)) {
             return $this->response_error('Model not found', 404);
         }
-
+        
+        $action = str_replace('-', '_', $action);
         if (! method_exists($this, $action)) {
             return $this->response_error('Invalid action', 404);
         }
@@ -49,6 +55,7 @@ class DynamicAPI extends FormRequest
             }
         }
 
+        // TODO::CHECK THIS
         $data = $this->$action();
         return $data;
     }
@@ -125,6 +132,38 @@ class DynamicAPI extends FormRequest
         ]);
     }
 
+public function send_otp()
+{
+    if (! $this->validated_data()) {
+        return $this->response_error($this->errors, 400);
+    }
+
+    $user = User::where('email', $this->validated_data['email'])->first();
+
+    if (! $user) {
+        return $this->response_error('User not found', 404);
+    }
+
+    $otp = rand(1000, 9999);
+    $passwordResetToken = PasswordResetToken::updateOrCreate(
+        ['email' => $user->email],
+        ['token' => $otp, 'created_at' => now()]
+    );
+
+    // TODO::send email
+    // $resetLink = url('/password-reset?token=' . $otp);
+    // Mail::to($user->email)->send(new PasswordResetMail($resetLink));
+
+    // TODO::send otp to mobile
+
+    // TODO::tries counter max 3 times or it will be blocked
+
+    return $this->response_data([
+        'user' => $user,
+        'otp' => $otp,
+        //'message' => 'Password reset email has been sent.',
+    ]);
+}
 
     public function show()
     {
@@ -251,6 +290,10 @@ class DynamicAPI extends FormRequest
                 'id'    => false
             ],
             'password_reset' => [
+                'method' => 'POST',
+                'id'    => false
+            ],
+            'send_otp' => [
                 'method' => 'POST',
                 'id'    => false
             ],

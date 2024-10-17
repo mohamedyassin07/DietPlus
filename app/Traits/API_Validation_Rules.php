@@ -98,7 +98,9 @@ trait API_Validation_Rules
                 'email' => 'required|email',
                 'password' => 'required|min:8',
             ],
-
+            'send_otp' => [
+                'email' => 'required|email',
+            ],
         ];
 
         return $rules[$model] ?? [];
