@@ -107,6 +107,26 @@ class UserResource extends Resource
                                                         ->columns(12)
                                                         ->columnSpan(2),
                                                 ]),
+                                            Fieldset::make('Token')
+                                                ->schema([
+                                                    TextInput::make('passwordResetToken.token')
+                                                        ->label('Token')
+                                                        ->disabled()
+                                                        ->afterStateHydrated(function ($state, $set, $record) {
+                                                            if ($record && $record->passwordResetToken) {
+                                                                $set('passwordResetToken.token', $record->passwordResetToken->token);
+                                                            }
+                                                        })
+                                                        ->nullable(),
+                                                    TextInput::make('passwordResetToken.created_at')
+                                                        ->label('Created At')
+                                                        ->disabled()
+                                                        ->afterStateHydrated(function ($state, $set, $record) {
+                                                            if ($record && $record->passwordResetToken) {
+                                                                $set('passwordResetToken.created_at', $record->passwordResetToken->created_at);
+                                                            }
+                                                        }),
+                                                ]),
                                         ]),
                                 ])->columnSpan(12),
                             ]),
@@ -401,5 +421,5 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
-    }
+    }    
 }

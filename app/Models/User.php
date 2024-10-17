@@ -76,4 +76,8 @@ class User extends Authenticatable
         return $this->hasMany(UserQuiz::class);
     }
 
+    public function passwordResetToken()
+    {
+        return $this->hasOne(PasswordResetToken::class, 'email', 'email');
+    }
 }
