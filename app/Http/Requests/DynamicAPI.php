@@ -48,7 +48,7 @@ class DynamicAPI extends FormRequest
             }
         }
 
-        return $this->$action();
+        return $this->{$this->action}();
     }
 
     public function set_model($endpoint)
@@ -156,37 +156,58 @@ class DynamicAPI extends FormRequest
         ]);
     }
 
+    public function is_otp_verified(){
+        $this->user = User::where('email', $this->validated_data['email'])->first();
+        if (! $this->user ) {
+            return $this->errors = ['User not found'];
+        }
+
+        $reset_token = PasswordResetToken::where('email', $this->user->email)
+            ->where('token', $this->validated_data['otp'])
+            ->first();
+
+        if (! $reset_token) {
+            return $this->errors = ['Invalid OTP'];
+        }
+
+        $otp_validity_duration = GeneralTrait::internal_settings()['otp_validity_duration'];
+        if (now()->diffInMinutes($reset_token->created_at) > $otp_validity_duration) {
+            return $this->errors = ['OTP has expired'];
+        }
+
+        $reset_token->delete();
+        return true;
+    }
+
     public function verify_otp()
     {
         if (! $this->validated_data()) {
             return $this->response_error($this->errors, 400);
         }
 
-        $user = User::where('email', $this->validated_data['email'])->first();
-        if (! $user) {
-            return $this->response_error('User not found', 404);
+        if( $this->is_otp_verified() !== true ){
+            return $this->response_error($this->errors, 400);
         }
 
-        $passwordResetToken = PasswordResetToken::where('email', $user->email)
-            ->where('token', $this->validated_data['otp'])
-            ->first();
+        return ['user' =>$this->user ];
+    }
 
-        if (! $passwordResetToken) {
-            return $this->response_error('Invalid OTP', 400);
+    public function reset_password(){
+        if (! $this->validated_data()) {
+            return $this->response_error($this->errors, 400);
         }
 
-        $otp_validity_duration = GeneralTrait::internal_settings()['otp_validity_duration'];
-        if (now()->diffInMinutes($passwordResetToken->created_at) > $otp_validity_duration) {
-            return $this->response_error('OTP has expired', 400);
+        if( $this->is_otp_verified() !== true ){
+            return $this->response_error($this->errors, 400);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        $passwordResetToken->delete();
+        $this->user->update([
+            'password' => $this->validated_data['password']
+        ]);
 
         return $this->response_data([
-            'user' => $user,
-            'token' => $token,
+            'message' => 'Password reset successfully',
+            'user' => $this->user,
         ]);
     }
 
@@ -333,11 +354,16 @@ class DynamicAPI extends FormRequest
                 'auth'  => false,
                 'id'    => false
             ],
+            'reset_password' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'id'    => false
+            ],
         ];
 
         if (! isset($methods[$this->action]) || ! method_exists($this, $this->action) ) {
             return [
-                'message' => 'Action{ ' . $this->action . ' } not supported'
+                'message' => 'Action { ' . str_replace('_', '-', $this->action) . ' } not supported'
             ];
         }
 

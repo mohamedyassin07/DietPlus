@@ -105,6 +105,11 @@ trait API_Validation_Rules
                 'email' => 'required|email',
                 'otp' => 'required|numeric',
             ],
+            'reset_password' => [
+                'email' => 'required|email',
+                'otp' => 'required|numeric',
+                'password' => 'required|min:8',
+            ],
         ];
 
         return $rules[$model] ?? [];
