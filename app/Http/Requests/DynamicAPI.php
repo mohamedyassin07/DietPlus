@@ -28,7 +28,7 @@ class DynamicAPI extends FormRequest
     public $errors;
     public $user;
 
-    public function handleRequest(Request $request, $endpoint, $action = null, $id = null)
+    public function handle_request(Request $request, $endpoint, $action = null, $id = null)
     {
         $this->request  = $request;
         $this->endpoint = $endpoint;
