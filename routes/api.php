@@ -14,8 +14,4 @@ use App\Http\Requests\DynamicAPI;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::any('/{model}/{action?}/{id?}', [DynamicAPI::class, 'handleRequest']);
-
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// });
+Route::any('/{model}/{action?}/{id?}', [DynamicAPI::class, 'handle_request']);

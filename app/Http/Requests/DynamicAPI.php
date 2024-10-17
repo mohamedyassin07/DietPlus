@@ -16,36 +16,29 @@ use App\Traits\GeneralTrait;
 
 class DynamicAPI extends FormRequest
 {
-    use API_Validation_Rules , GeneralTrait;
+    use API_Validation_Rules, GeneralTrait;
 
     public $request;
     public $endpoint;
     public $action;
     public $model;
-    public $record;
     public $id;
+    public $record;
     public $validated_data;
     public $errors;
+    public $user;
 
     public function handleRequest(Request $request, $endpoint, $action = null, $id = null)
     {
-        if (! $this->set_model($endpoint)) {
-            return $this->response_error('Model not found', 404);
-        }
-
-        $action = str_replace('-', '_', $action);
-        if (! method_exists($this, $action)) {
-            return $this->response_error('Invalid action', 404);
-        }
-
+        $this->request  = $request;
         $this->endpoint = $endpoint;
-        $this->request = $request;
-        $this->action = $action;
-        $this->id = $id;
+        $this->action   = str_replace('-', '_', $action);
+        $this->id       = $id;
 
         $compatibility_check = $this->request_compatibility();
         if ($compatibility_check !== true) {
-            return $this->response_error($compatibility_check, 404);
+            $code = $compatibility_check['code'] ?? 400;
+            return $this->response_error($compatibility_check['message'], $code);
         }
 
         if ($id) {
@@ -55,9 +48,7 @@ class DynamicAPI extends FormRequest
             }
         }
 
-        // TODO::CHECK THIS
-        $data = $this->$action();
-        return $data;
+        return $this->$action();
     }
 
     public function set_model($endpoint)
@@ -124,7 +115,7 @@ class DynamicAPI extends FormRequest
 
         $user = Auth::user();
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('diet_plus_auth_token')->plainTextToken;
 
         return $this->response_data([
             'token' => $token,
@@ -145,7 +136,7 @@ class DynamicAPI extends FormRequest
         }
 
         $otp = rand(1000, 9999);
-        $passwordResetToken = PasswordResetToken::updateOrCreate(
+        PasswordResetToken::updateOrCreate(
             ['email' => $user->email],
             ['token' => $otp, 'created_at' => now()]
         );
@@ -183,7 +174,7 @@ class DynamicAPI extends FormRequest
         if (! $passwordResetToken) {
             return $this->response_error('Invalid OTP', 400);
         }
-        
+
         $otp_validity_duration = GeneralTrait::internal_settings()['otp_validity_duration'];
         if (now()->diffInMinutes($passwordResetToken->created_at) > $otp_validity_duration) {
             return $this->response_error('OTP has expired', 400);
@@ -289,68 +280,109 @@ class DynamicAPI extends FormRequest
         $methods = [
             'list' => [
                 'method' => 'GET',
+                'auth'  => true,
                 'id'    => false
             ],
             'fields' => [
                 'method' => 'GET',
+                'auth'  => false,
                 'id'    => false
             ],
             'add' => [
                 'method' => 'POST',
+                'auth'  => true,
                 'id'    => false
             ],
             'edit' => [
                 'method' => 'POST',
+                'auth'  => true,
                 'id'    => true
             ],
             'delete' => [
                 'method' => 'DELETE',
+                'auth'  => true,
                 'id'    => true
             ],
             'show' => [
                 'method' => 'GET',
+                'auth'  => true,
                 'id'    => true
             ],
             'register' => [
                 'method' => 'POST',
+                'auth'  => false,
                 'id'    => false
             ],
             'login' => [
                 'method' => 'POST',
-                'id'    => false
-            ],
-            'logout' => [
-                'method' => 'POST',
+                'auth'  => false,
                 'id'    => false
             ],
             'password_reset' => [
                 'method' => 'POST',
+                'auth'  => false,
                 'id'    => false
             ],
             'send_otp' => [
                 'method' => 'POST',
+                'auth'  => false,
                 'id'    => false
             ],
             'verify_otp' => [
                 'method' => 'POST',
+                'auth'  => false,
                 'id'    => false
-            ]
+            ],
         ];
 
-        if (! isset($methods[$this->action])) {
-            return 'Action{ ' . $this->action . ' } not supported';
+        if (! isset($methods[$this->action]) || ! method_exists($this, $this->action) ) {
+            return [
+                'message' => 'Action{ ' . $this->action . ' } not supported'
+            ];
+        }
+
+        if ($methods[$this->action]['auth'] && ! $this->request->header('Authorization')) {
+            return [
+                'message' => 'Authorization token is required',
+                'code' => 401
+            ];
+        }
+
+        if (! $this->set_model($this->endpoint)) {
+            return [
+                'message' => 'Model { '.$this->endpoint.' }not found',
+                'code' => 404
+            ];
         }
 
         if ($this->request->method() !== $methods[$this->action]['method']) {
-            return 'Method { ' . $this->request->method() . ' } not allowed for { ' . $this->action . ' } action';
+            return [
+                'message' => 'Method { ' . $this->request->method() . ' } not allowed for { ' . $this->action . ' } action',
+                'code' => 405
+            ];
         }
 
         if ($methods[$this->action]['id'] && ! $this->id) {
-            return 'URL paremater { ID } is required';
+            return [
+                'message' => 'URL paremater { ID } is required'
+            ];
         }
 
         if (!$methods[$this->action]['id'] && $this->id) {
-            return 'URL paremater { ID } is not supported for action { ' . $this->action . ' }';
+            return [
+                'message' => 'URL paremater { ID } is not supported for action { ' . $this->action . ' }',
+                'code' => 405
+            ];
+        }
+
+        if( $methods[$this->action]['auth'] ){
+            $this->user = Auth::guard('sanctum')->user();
+            if (! $this->user) {
+                return [
+                    'message' => 'Invalid or expired token',
+                    'code' => 401
+                ];
+            }    
         }
 
         return true;
