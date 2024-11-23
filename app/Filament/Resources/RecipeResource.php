@@ -46,6 +46,11 @@ class RecipeResource extends Resource
                             })
                             ->default('breakfast')
                             ->required(),
+                        TextInput::make('calories')
+                            ->columnSpan(6)
+                            ->readOnly()
+                            ->placeholder('Wait For Calculate')
+                            ->reactive(),
                         TextInput::make('fats')
                             ->columnSpan(6)
                             ->readOnly()
@@ -64,18 +69,13 @@ class RecipeResource extends Resource
                         RichEditor::make('preparation_method')
                             ->toolbarButtons([
                                 'attachFiles',
-                                //'blockquote',
                                 'bold',
                                 'bulletList',
-                                //'codeBlock',
                                 'h2',
                                 'h3',
-                                //'italic',
                                 'link',
                                 'orderedList',
                                 'redo',
-                                //'strike',
-                                //'underline',
                                 'undo',
                             ])
                             ->required()
