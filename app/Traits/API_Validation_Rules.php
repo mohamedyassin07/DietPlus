@@ -2,8 +2,158 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
 trait API_Validation_Rules
 {
+    public function request_compatibility()
+    {
+        $methods = [
+            'list' => [
+                'method' => 'GET',
+                'auth'  => true,
+                'data_req' => false,
+                'id'    => false
+            ],
+            'fields' => [
+                'method' => 'GET',
+                'auth'  => false,
+                'data_req' => false,
+                'id'    => false
+            ],
+            'add' => [
+                'method' => 'POST',
+                'auth'  => true,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'edit' => [
+                'method' => 'POST',
+                'auth'  => true,
+                'data_req' => true,
+                'id'    => true
+            ],
+            'delete' => [
+                'method' => 'DELETE',
+                'auth'  => true,
+                'id'    => true
+            ],
+            'show' => [
+                'method' => 'GET',
+                'auth'  => true,
+                'id'    => true
+            ],
+            'register' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'login' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'password_reset' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'send_otp' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'verify_otp' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'reset_password' => [
+                'method' => 'POST',
+                'auth'  => false,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'change_password' => [
+                'method' => 'POST',
+                'auth'  => true,
+                'data_req' => true,
+                'id'    => false
+            ],
+            'check_token' => [
+                'method' => 'POST',
+                'auth'  => true,
+                'id'    => false
+            ],
+        ];
+
+        if (! isset($methods[$this->action]) || ! method_exists($this, $this->action) ) {
+            return [
+                'message' => 'Action { ' . str_replace('_', '-', $this->action) . ' } not supported'
+            ];
+        }
+
+        if ($methods[$this->action]['auth'] && ! $this->request->header('Authorization')) {
+            return [
+                'message' => 'Authorization token is required',
+                'code' => 401
+            ];
+        }
+
+        if (! $this->set_model($this->endpoint)) {
+            return [
+                'message' => 'Model { '.$this->endpoint.' }not found',
+                'code' => 404
+            ];
+        }
+
+        if ($this->request->method() !== $methods[$this->action]['method']) {
+            return [
+                'message' => 'Method { ' . $this->request->method() . ' } not allowed for { ' . $this->action . ' } action',
+                'code' => 405
+            ];
+        }
+
+        if ($methods[$this->action]['id'] && ! $this->id) {
+            return [
+                'message' => 'URL paremater { ID } is required'
+            ];
+        }
+
+        if (!$methods[$this->action]['id'] && $this->id) {
+            return [
+                'message' => 'URL paremater { ID } is not supported for action { ' . $this->action . ' }',
+                'code' => 405
+            ];
+        }
+
+        if( $methods[$this->action]['auth'] ){
+            $this->user = Auth::guard('sanctum')->user();
+            if (! $this->user) {
+                return [
+                    'message' => 'Invalid or expired token',
+                    'code' => 401
+                ];
+            }    
+        }
+
+        // this generate the errors if exists
+        if( $methods[$this->action]['data_req'] && ! $this->validated_data() ){
+            return [
+                'message' => $this->errors,
+                'code' => 401
+            ];                
+        }
+
+        return true;
+    }
+
     public static function get_validations_rules( $model )
     {
         $password_rules = 'required|string|min:8|max:255';
@@ -120,4 +270,17 @@ trait API_Validation_Rules
 
         return $rules[$model] ?? [];
     }
+
+    public function validated_data()
+    {
+        $validator = Validator::make($this->request->all(), $this->fields());
+
+        if ($validator->fails()) {
+            $this->errors = $validator->errors()->all();
+            return false;
+        }
+
+        return $this->validated_data = $validator->validated();
+    }
+
 }
