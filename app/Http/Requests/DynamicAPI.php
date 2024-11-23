@@ -49,6 +49,7 @@ class DynamicAPI extends FormRequest
         return $this->{$this->action}();
     }
 
+    // ------------------------------- Basics ------------------------------- //
     public function set_model($endpoint)
     {
         $model_class = 'App\\Models\\' . Str::studly(Str::singular($endpoint));
@@ -70,12 +71,99 @@ class DynamicAPI extends FormRequest
         return response()->json(['errors' => $errors], $code);
     }
 
+    // ------------------------------- End Points ------------------------------- //
     public function add()
     {
         $this->record = $this->model->create($this->validated_data);
         return $this->response_data($this->record);
     }
 
+    public function show()
+    {
+        return $this->response_data($this->record->toArray());
+    }
+
+    public function edit()
+    {
+        $this->record->update($this->validated_data);
+        return $this->response_data($this->record->fresh());
+    }
+
+    public function delete()
+    {
+        $id = $this->record->id;
+        $this->record->delete();
+
+        return $this->response_data([
+            'message' => 'Record deleted successfully',
+            'deleted_id' => $id
+        ]);
+    }
+
+    public function list()
+    {
+        $query = $this->model->query();
+
+        $filters = $this->request->input('filters', []);
+        foreach ($filters as $filter) {
+            if (! isset($filter['field']) ||  ! isset($filter['operator']) ||  !isset($filter['value'])) {
+                return $this->response_error('Every filter MUST contains: field,operator,value ', 404);
+            }
+
+            $field = $filter['field'];
+            $operator = $filter['operator'];
+            $value = $filter['value'];
+
+            if (! in_array($field, $this->model->getFillable())) {
+                return $this->response_error('This field {{' . $field . '}} not filterable', 404);
+            }
+
+            switch ($operator) {
+                case '=':
+                case '!=':
+                case '>':
+                case '<':
+                case '>=':
+                case '<=':
+                    $query->where($field, $operator, $value);
+                    break;
+                case 'like':
+                    $query->where($field, 'LIKE', "%$value%");
+                    break;
+                case 'between':
+                    if (is_array($value) && count($value) == 2) {
+                        $query->whereBetween($field, $value);
+                    }
+                    break;
+                case 'in':
+                    if (is_array($value)) {
+                        $query->whereIn($field, $value);
+                    }
+                    break;
+            }
+        }
+
+        $sortField = $this->request->input('sort_by', 'id');
+        $sortDirection = $this->request->input('sort_direction', 'asc');
+        if (in_array($sortField, $this->model->getFillable())) {
+            $query->orderBy($sortField, $sortDirection);
+        }
+
+        $perPage = $this->request->input('per_page', 10);
+
+        return $query->paginate($perPage);
+    }
+
+    public function fields()
+    {
+        $fields = self::get_validations_rules($this->action);
+        if (! $fields) {
+            $fields = self::get_validations_rules($this->endpoint);
+        }
+        return $fields;
+    }
+
+    // ------------------------------- Custom End Points ------------------------------- //
     public function register()
     {
         $this->request->merge(['user_type' => 'Customer']);
@@ -208,90 +296,5 @@ class DynamicAPI extends FormRequest
             'message' => 'Token is valid',
             'user' => $this->user,
         ]);
-    }
-
-    public function show()
-    {
-        return $this->response_data($this->record->toArray());
-    }
-
-    public function edit()
-    {
-        $this->record->update($this->validated_data);
-        return $this->response_data($this->record->fresh());
-    }
-
-    public function delete()
-    {
-        $id = $this->record->id;
-        $this->record->delete();
-
-        return $this->response_data([
-            'message' => 'Record deleted successfully',
-            'deleted_id' => $id
-        ]);
-    }
-
-    public function list()
-    {
-        $query = $this->model->query();
-
-        $filters = $this->request->input('filters', []);
-        foreach ($filters as $filter) {
-            if (! isset($filter['field']) ||  ! isset($filter['operator']) ||  !isset($filter['value'])) {
-                return $this->response_error('Every filter MUST contains: field,operator,value ', 404);
-            }
-
-            $field = $filter['field'];
-            $operator = $filter['operator'];
-            $value = $filter['value'];
-
-            if (! in_array($field, $this->model->getFillable())) {
-                return $this->response_error('This field {{' . $field . '}} not filterable', 404);
-            }
-
-            switch ($operator) {
-                case '=':
-                case '!=':
-                case '>':
-                case '<':
-                case '>=':
-                case '<=':
-                    $query->where($field, $operator, $value);
-                    break;
-                case 'like':
-                    $query->where($field, 'LIKE', "%$value%");
-                    break;
-                case 'between':
-                    if (is_array($value) && count($value) == 2) {
-                        $query->whereBetween($field, $value);
-                    }
-                    break;
-                case 'in':
-                    if (is_array($value)) {
-                        $query->whereIn($field, $value);
-                    }
-                    break;
-            }
-        }
-
-        $sortField = $this->request->input('sort_by', 'id');
-        $sortDirection = $this->request->input('sort_direction', 'asc');
-        if (in_array($sortField, $this->model->getFillable())) {
-            $query->orderBy($sortField, $sortDirection);
-        }
-
-        $perPage = $this->request->input('per_page', 10);
-
-        return $query->paginate($perPage);
-    }
-
-    public function fields()
-    {
-        $fields = self::get_validations_rules($this->action);
-        if (! $fields) {
-            $fields = self::get_validations_rules($this->endpoint);
-        }
-        return $fields;
     }
 }
