@@ -87,10 +87,6 @@ class DynamicAPI extends FormRequest
 
     public function add()
     {
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         $this->record = $this->model->create($this->validated_data);
         return $this->response_data($this->record);
     }
@@ -103,10 +99,6 @@ class DynamicAPI extends FormRequest
 
     public function login()
     {
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         if (!Auth::attempt([
             'email' => $this->request->input('email'),
             'password' => $this->request->input('password')
@@ -126,10 +118,6 @@ class DynamicAPI extends FormRequest
 
     public function send_otp()
     {
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         $user = User::where('email', $this->validated_data['email'])->first();
 
         if (! $user) {
@@ -185,10 +173,6 @@ class DynamicAPI extends FormRequest
 
     public function verify_otp()
     {
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         if( $this->is_otp_verified() !== true ){
             return $this->response_error($this->errors, 400);
         }
@@ -197,10 +181,6 @@ class DynamicAPI extends FormRequest
     }
 
     public function reset_password(){
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         if( $this->is_otp_verified( true ) !== true ){
             return $this->response_error($this->errors, 400);
         }
@@ -219,10 +199,6 @@ class DynamicAPI extends FormRequest
     }
 
     public function change_password(){
-        if (! $this->validated_data()) {
-            return $this->response_error($this->errors, 400);
-        }
-
         if (!Hash::check($this->validated_data['current_password'], $this->user->password)) {
             return $this->response_error('Current password field is incorrect', 400);
         }
@@ -340,21 +316,25 @@ class DynamicAPI extends FormRequest
             'list' => [
                 'method' => 'GET',
                 'auth'  => true,
+                'data_req' => false,
                 'id'    => false
             ],
             'fields' => [
                 'method' => 'GET',
                 'auth'  => false,
+                'data_req' => false,
                 'id'    => false
             ],
             'add' => [
                 'method' => 'POST',
                 'auth'  => true,
+                'data_req' => true,
                 'id'    => false
             ],
             'edit' => [
                 'method' => 'POST',
                 'auth'  => true,
+                'data_req' => true,
                 'id'    => true
             ],
             'delete' => [
@@ -370,36 +350,43 @@ class DynamicAPI extends FormRequest
             'register' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'login' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'password_reset' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'send_otp' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'verify_otp' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'reset_password' => [
                 'method' => 'POST',
                 'auth'  => false,
+                'data_req' => true,
                 'id'    => false
             ],
             'change_password' => [
                 'method' => 'POST',
                 'auth'  => true,
+                'data_req' => true,
                 'id'    => false
             ],
             'check_token' => [
@@ -457,6 +444,14 @@ class DynamicAPI extends FormRequest
                     'code' => 401
                 ];
             }    
+        }
+
+        // this generate the errors if exists
+        if( $methods[$this->action]['data_req'] && ! $this->validated_data() ){
+            return [
+                'message' => $this->errors,
+                'code' => 401
+            ];                
         }
 
         return true;
