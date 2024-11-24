@@ -37,11 +37,13 @@ trait API_Validation_Rules
             'delete' => [
                 'method' => 'DELETE',
                 'auth'  => true,
+                'data_req' => false,
                 'id'    => true
             ],
             'show' => [
                 'method' => 'GET',
                 'auth'  => true,
+                'data_req' => false,
                 'id'    => true
             ],
             'register' => [
@@ -156,7 +158,7 @@ trait API_Validation_Rules
 
     public static function get_validations_rules( $model )
     {
-        $password_rules = 'required|string|min:8|max:255';
+        $password_rules = 'sometimes|string|min:8|max:255';
 
         $rules = [
             'diet-plans' => [
@@ -239,7 +241,7 @@ trait API_Validation_Rules
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => $password_rules,
-                'user_type' => 'required|in:Admin,Employee,Customer',
+                'user_type' => 'sometimes|in:Admin,Employee,Customer',
                 'image' => 'nullable|image|max:2048',
             ],
             'user-restrictions' => [
