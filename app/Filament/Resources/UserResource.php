@@ -54,6 +54,15 @@ class UserResource extends Resource
                                                     'Customer' => 'Customer',
                                                 ])->required(),
                                             TextInput::make('email')->email()->required(),
+                                            TextInput::make('phone')
+                                                ->label('Phone')
+                                                ->tel()
+                                                ->nullable()
+                                                ->unique('users', 'phone', ignoreRecord: true)
+                                                ->minLength(10)
+                                                ->maxLength(15)
+                                                ->regex('/^\+?[0-9]{10,15}$/')
+                                                ->helperText('Enter a valid phone number (e.g., +1234567890)'),
                                             TextInput::make('password')
                                                 ->password()
                                                 ->dehydrateStateUsing(fn($state) => Hash::make($state))

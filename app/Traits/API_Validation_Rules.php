@@ -240,6 +240,7 @@ trait API_Validation_Rules
             'users' => [
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
+                'phone' => 'sometimes|nullable|string|regex:/^\+?[0-9]{10,15}$/|unique:users,phone,' . $user->id,                
                 'password' => $password_rules,
                 'user_type' => 'sometimes|in:Admin,Employee,Customer',
                 'image' => 'nullable|image|max:2048',
