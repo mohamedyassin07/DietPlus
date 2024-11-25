@@ -57,12 +57,12 @@ class UserResource extends Resource
                                             TextInput::make('phone')
                                                 ->label('Phone')
                                                 ->tel()
-                                                ->nullable()
+                                                ->required()
                                                 ->unique('users', 'phone', ignoreRecord: true)
                                                 ->minLength(10)
                                                 ->maxLength(15)
-                                                ->regex('/^\+?[0-9]{10,15}$/')
-                                                ->helperText('Enter a valid phone number (e.g., +1234567890)'),
+                                                ->regex('/^\+\d{12}$/')
+                                                ->helperText('Enter a valid phone number (e.g.,+972123456789)'),
                                             TextInput::make('password')
                                                 ->password()
                                                 ->dehydrateStateUsing(fn($state) => Hash::make($state))
