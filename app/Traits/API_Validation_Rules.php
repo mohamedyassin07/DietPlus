@@ -91,6 +91,7 @@ trait API_Validation_Rules
             'check_token' => [
                 'method' => 'POST',
                 'auth'  => true,
+                'data_req' => false,
                 'id'    => false
             ],
         ];
