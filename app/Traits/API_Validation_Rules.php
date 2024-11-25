@@ -241,7 +241,7 @@ trait API_Validation_Rules
             'users' => [
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
-                'phone' => 'sometimes|nullable|string|regex:/^\+\d{12}$/|unique:users,phone',
+                'phone' => 'required|nullable|string|regex:/^\+\d{12}$/|unique:users,phone',
                 'password' => $password_rules,
                 'user_type' => 'sometimes|in:Admin,Employee,Customer',
                 'image' => 'nullable|image|max:2048',
